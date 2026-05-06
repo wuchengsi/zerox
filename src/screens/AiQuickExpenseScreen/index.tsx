@@ -360,8 +360,8 @@ const AiQuickExpenseScreen = () => {
               return (
                 <View
                   key={item.localId}
-                  style={[gs.rounded12, gs.p14, gs.mb12, {backgroundColor: colors.containerColor}]}>
-                  <View style={[gs.rowBetweenCenter, gs.mb12]}>
+                  style={[gs.rounded12, gs.p14, gs.mb10, {backgroundColor: colors.containerColor}]}>
+                  <View style={[gs.rowBetweenCenter, gs.mb10]}>
                     <PrimaryText size={13} weight="semibold">
                       第 {index + 1} 条
                     </PrimaryText>
