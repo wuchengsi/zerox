@@ -23,7 +23,7 @@ const ChangeNameSheet: React.FC<SheetProps<'change-name-sheet'>> = React.memo(pr
     <CustomBottomSheet
       sheetId={props.sheetId}
       header={{
-        title: 'Change Name',
+        title: '修改昵称',
         showCloseButton: true,
         onClosePress: () => void SheetManager.hide(props.sheetId),
       }}
@@ -34,14 +34,14 @@ const ChangeNameSheet: React.FC<SheetProps<'change-name-sheet'>> = React.memo(pr
             colors={colors}
             input={name}
             setInput={setName}
-            placeholder={'Enter your name'}
+            placeholder={'请输入昵称'}
             schema={nameSchema}
           />
         </View>
         <PrimaryButton
           onPress={handleConfirm}
           colors={colors}
-          buttonTitle="Update"
+          buttonTitle="更新"
           disabled={!nameSchema.safeParse(name).success}
         />
       </View>

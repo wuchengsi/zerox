@@ -14,11 +14,11 @@ interface TransactionCardProps {
 }
 
 const getIconName = (day: string) => {
-  if (day === 'Today') {
+  if (day === 'Today' || day === '今天') {
     return 'calendar';
-  } else if (day === 'Yesterday') {
+  } else if (day === 'Yesterday' || day === '昨天') {
     return 'calendar';
-  } else if (day === 'This Month') {
+  } else if (day === 'This Month' || day === '本月') {
     return 'calendar-days';
   }
   return 'calendar';
@@ -42,10 +42,10 @@ const TransactionCard: React.FC<TransactionCardProps> = React.memo(({currencySym
       </View>
       <View>
         <PrimaryText size={14} weight="semibold">
-          {day === 'This Month' ? `${getCurrentMonthName()}'s` : `${day}'s`}
+          {day === 'This Month' || day === '本月' ? `${getCurrentMonthName()}账单` : `${day}账单`}
         </PrimaryText>
         <PrimaryText size={11} color={colors.secondaryText}>
-          Transactions
+          交易记录
         </PrimaryText>
       </View>
       <View style={[gs.rounded8, gs.py8, gs.px10, {backgroundColor: colors.lightAccent}]}>

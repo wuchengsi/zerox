@@ -186,19 +186,19 @@ const CategoryEntry: React.FC<CategoryEntryProps> = ({type, route}) => {
     <PrimaryView colors={colors} style={gs.justifyBetween} dismissKeyboardOnTouch>
       <View>
         <View style={[gs.mb20, gs.mt20]}>
-          <AppHeader onPress={goBack} colors={colors} text={isAddButton ? 'Add Category' : 'Edit Category'} />
+          <AppHeader onPress={goBack} colors={colors} text={isAddButton ? '新增分类' : '编辑分类'} />
         </View>
 
         <CustomInput
           colors={colors}
           input={categoryName}
           setInput={setCategoryName}
-          placeholder="eg. Stationary"
-          label="Category Name"
+          placeholder="例如 办公用品"
+          label="分类名称"
           schema={categorySchema}
         />
 
-        <PrimaryText size={12} color={colors.secondaryText} style={gs.mb8}>Appearance</PrimaryText>
+        <PrimaryText size={12} color={colors.secondaryText} style={gs.mb8}>外观</PrimaryText>
         <View style={[gs.row, gs.gap8, gs.mb15]}>
           <TouchableOpacity
             onPress={handleOpenIconPicker}
@@ -226,9 +226,9 @@ const CategoryEntry: React.FC<CategoryEntryProps> = ({type, route}) => {
               />
             </View>
             <View style={gs.flex1}>
-              <PrimaryText size={11} color={colors.secondaryText}>Icon</PrimaryText>
+              <PrimaryText size={11} color={colors.secondaryText}>图标</PrimaryText>
               <PrimaryText size={13} weight="medium">
-                {selectedIcon ? 'Change' : 'Choose'}
+                {selectedIcon ? '更换' : '选择'}
               </PrimaryText>
             </View>
           </TouchableOpacity>
@@ -254,9 +254,9 @@ const CategoryEntry: React.FC<CategoryEntryProps> = ({type, route}) => {
               ]}
             />
             <View style={gs.flex1}>
-              <PrimaryText size={11} color={colors.secondaryText}>Color</PrimaryText>
+              <PrimaryText size={11} color={colors.secondaryText}>颜色</PrimaryText>
               <PrimaryText size={13} weight="medium">
-                {selectedColor ? 'Change' : 'Choose'}
+                {selectedColor ? '更换' : '选择'}
               </PrimaryText>
             </View>
           </TouchableOpacity>
@@ -266,7 +266,7 @@ const CategoryEntry: React.FC<CategoryEntryProps> = ({type, route}) => {
           <>
             <View style={[gs.rowCenter, gs.gap8, gs.mb8]}>
               <View style={[gs.flex1, {height: 0.5, backgroundColor: colors.secondaryAccent}]} />
-              <PrimaryText size={11} color={colors.secondaryText}>or pick from defaults</PrimaryText>
+              <PrimaryText size={11} color={colors.secondaryText}>或从默认分类中选择</PrimaryText>
               <View style={[gs.flex1, {height: 0.5, backgroundColor: colors.secondaryAccent}]} />
             </View>
             <View style={[gs.minH55, gs.mt5]}>
@@ -285,7 +285,7 @@ const CategoryEntry: React.FC<CategoryEntryProps> = ({type, route}) => {
       <PrimaryButton
         onPress={handleAddFromDefaultOrAddCategory}
         colors={colors}
-        buttonTitle={isAddButton ? 'Add' : 'Update'}
+        buttonTitle={isAddButton ? '新增' : '更新'}
         disabled={!isValid && selectedCategories.length === 0}
       />
     </PrimaryView>

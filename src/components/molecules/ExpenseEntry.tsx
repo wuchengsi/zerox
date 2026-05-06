@@ -1,4 +1,4 @@
-import {ScrollView, TextInput, View} from 'react-native';
+import {ScrollView, TextInput, TouchableOpacity, View} from 'react-native';
 import React, {useCallback, useEffect, useState, memo} from 'react';
 import PrimaryView from '../atoms/PrimaryView';
 import AppHeader from '../atoms/AppHeader';
@@ -6,6 +6,7 @@ import CustomInput from '../atoms/CustomInput';
 import PrimaryText from '../atoms/PrimaryText';
 import CategoryContainer from './CategoryContainer';
 import PrimaryButton from '../atoms/PrimaryButton';
+import Icon from '../atoms/Icons';
 import useThemeColors from '../../hooks/useThemeColors';
 import {goBack, navigate} from '../../utils/navigationUtils';
 import {useDispatch, useSelector} from 'react-redux';
@@ -143,27 +144,42 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
   return (
     <PrimaryView colors={colors} dismissKeyboardOnTouch>
       <View style={[gs.mb20, gs.mt20]}>
-        <AppHeader onPress={() => goBack()} colors={colors} text={isAddButton ? 'Add Transaction' : 'Edit Transaction'} />
+          <AppHeader
+            onPress={() => goBack()}
+            colors={colors}
+            text={isAddButton ? '新增账单' : '编辑账单'}
+            rightAction={
+              isAddButton ? (
+                <TouchableOpacity
+                  onPress={() => navigate('AiQuickExpenseScreen')}
+                  hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+                  accessibilityLabel="AI 快速记账"
+                  accessibilityRole="button">
+                  <Icon name="sparkles" size={20} color={colors.primaryText} />
+                </TouchableOpacity>
+              ) : null
+            }
+          />
       </View>
 
       <CustomInput
         colors={colors}
         input={expenseTitle}
         setInput={setExpenseTitle}
-        placeholder="eg. Biryani"
-        label="Title"
+        placeholder="例如 午饭"
+        label="标题"
         schema={expenseSchema}
       />
       <CustomInput
         colors={colors}
         input={expenseDescription}
         setInput={setExpenseDescription}
-        placeholder="eg. From Aroma's"
-        label="Description"
+        placeholder="例如 用支付宝"
+        label="备注"
         schema={expenseDescriptionSchema}
       />
 
-      <PrimaryText size={12} color={colors.secondaryText} style={gs.mb5}>Amount</PrimaryText>
+      <PrimaryText size={12} color={colors.secondaryText} style={gs.mb5}>金额</PrimaryText>
       <View
         style={[
           gs.h48,
@@ -205,10 +221,10 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
         createdAt={createdAt}
         showDatePicker={showDatePicker}
         setCreatedAt={setCreatedAt}
-        label="Date"
+        label="日期"
       />
 
-      <PrimaryText size={12} color={colors.secondaryText} style={gs.mb8}>Category</PrimaryText>
+      <PrimaryText size={12} color={colors.secondaryText} style={gs.mb8}>分类</PrimaryText>
       <ScrollView showsVerticalScrollIndicator={false}>
         <CategoryContainer
           categories={categories}
@@ -219,7 +235,7 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
         <PrimaryButton
           onPress={handleAddCategory}
           colors={colors}
-          buttonTitle="Add Category"
+          buttonTitle="新增分类"
           variant="ghost"
           size="sm"
           fullWidth={false}
@@ -229,7 +245,7 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
         <PrimaryButton
           onPress={isAddButton ? handleAddExpense : handleUpdateExpense}
           colors={colors}
-          buttonTitle={isAddButton ? 'Add' : 'Update'}
+          buttonTitle={isAddButton ? '新增' : '更新'}
           disabled={!isValid}
         />
       </View>

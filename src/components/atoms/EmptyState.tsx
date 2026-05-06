@@ -24,10 +24,10 @@ const iconMap: Record<EmptyStateType, IconName> = {
 };
 
 const messageMap: Record<EmptyStateType, string> = {
-  Transactions: 'No transactions yet',
-  Insights: 'No insights yet',
-  Debts: 'No debts yet',
-  Categories: 'No categories yet',
+  Transactions: '还没有账单',
+  Insights: '还没有统计数据',
+  Debts: '还没有债务记录',
+  Categories: '还没有分类',
 };
 
 const EmptyState: React.FC<EmptyStateProps> = React.memo(({colors, type, style, message, actionButton}) => {

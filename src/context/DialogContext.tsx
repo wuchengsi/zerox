@@ -157,11 +157,11 @@ export const DialogProvider: React.FC<DialogProviderProps> = ({children}) => {
                   <TouchableOpacity
                     onPress={() => dismiss(false)}
                     activeOpacity={0.7}
-                    accessibilityLabel={display.cancelLabel ?? 'Cancel'}
+                    accessibilityLabel={display.cancelLabel ?? '取消'}
                     accessibilityRole="button">
                     <View style={[gs.w60, gs.h35, gs.rounded5, gs.center, {backgroundColor: colors.accentRed}]}>
                       <PrimaryText size={13} weight="semibold" color={colors.sameWhite}>
-                        {display.cancelLabel ?? 'Cancel'}
+                        {display.cancelLabel ?? '取消'}
                       </PrimaryText>
                     </View>
                   </TouchableOpacity>
@@ -169,11 +169,11 @@ export const DialogProvider: React.FC<DialogProviderProps> = ({children}) => {
                 <TouchableOpacity
                   onPress={() => dismiss(true)}
                   activeOpacity={0.7}
-                  accessibilityLabel={display?.okLabel ?? 'Ok'}
+                  accessibilityLabel={display?.okLabel ?? '确定'}
                   accessibilityRole="button">
                   <View style={[gs.w60, gs.h35, gs.rounded5, gs.center, {backgroundColor: colors.accentGreen}]}>
                     <PrimaryText size={13} weight="semibold" color={colors.buttonText}>
-                      {display?.okLabel ?? 'Ok'}
+                      {display?.okLabel ?? '确定'}
                     </PrimaryText>
                   </View>
                 </TouchableOpacity>

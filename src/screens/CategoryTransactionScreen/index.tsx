@@ -40,7 +40,7 @@ const CategoryTransactionScreen = () => {
           </View>
           <View style={[gs.px10, gs.py3, gs.rounded8, {backgroundColor: categoryColor + '20'}]}>
             <PrimaryText size={12} weight="semibold" variant="number" color={categoryColor}>
-              {transactions.length} {transactions.length === 1 ? 'txn' : 'txns'}
+              {transactions.length} 条
             </PrimaryText>
           </View>
         </View>
@@ -56,7 +56,7 @@ const CategoryTransactionScreen = () => {
           <Icon name="receipt" size={22} color={colors.secondaryText} />
         </View>
         <PrimaryText size={13} color={colors.secondaryText} style={gs.mt10}>
-          No transactions in {categoryName}
+          {categoryName} 暂无账单
         </PrimaryText>
       </View>
     ),

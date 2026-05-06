@@ -7,6 +7,11 @@ import PrimaryText from '../components/atoms/PrimaryText';
 import {gs} from '../styles/globalStyles';
 
 const THEMES = ['light', 'dark', 'system'] as const;
+const THEME_LABELS: Record<(typeof THEMES)[number], string> = {
+  light: '浅色',
+  dark: '深色',
+  system: '跟随系统',
+};
 
 const ThemePickerSheet: React.FC<SheetProps<'theme-picker-sheet'>> = React.memo(props => {
   const colors = useThemeColors();
@@ -21,7 +26,7 @@ const ThemePickerSheet: React.FC<SheetProps<'theme-picker-sheet'>> = React.memo(
     <CustomBottomSheet
       sheetId={props.sheetId}
       header={{
-        title: 'Select Theme',
+        title: '选择主题',
         showCloseButton: true,
         onClosePress: () => void SheetManager.hide(props.sheetId),
       }}
@@ -31,7 +36,7 @@ const ThemePickerSheet: React.FC<SheetProps<'theme-picker-sheet'>> = React.memo(
           <TouchableOpacity key={theme} onPress={() => setSelected(theme)} activeOpacity={0.6}>
             <View style={[gs.rowBetweenCenter, gs.py12]}>
               <PrimaryText size={15} weight={selected === theme ? 'semibold' : 'medium'}>
-                {theme.charAt(0).toUpperCase() + theme.slice(1)}
+                {THEME_LABELS[theme]}
               </PrimaryText>
               <View
                 style={[
@@ -53,7 +58,7 @@ const ThemePickerSheet: React.FC<SheetProps<'theme-picker-sheet'>> = React.memo(
           activeOpacity={0.7}
           style={[gs.mt10, gs.py12, gs.rounded10, gs.center, {backgroundColor: colors.accentGreen}]}>
           <PrimaryText size={14} weight="semibold" color={colors.buttonText}>
-            Apply
+            应用
           </PrimaryText>
         </TouchableOpacity>
       </View>

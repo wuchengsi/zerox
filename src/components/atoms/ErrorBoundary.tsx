@@ -36,14 +36,14 @@ class ErrorBoundary extends Component<Props, State> {
         <View style={styles.container}>
           <PrimaryText size={40} weight="bold">:(</PrimaryText>
           <PrimaryText size={16} weight="semibold" style={styles.title}>
-            Something went wrong
+            出现了一点问题
           </PrimaryText>
           <PrimaryText size={13} color="#888" style={styles.subtitle}>
-            The app ran into an unexpected error.{'\n'}Your data is safe.
+            应用遇到未预期错误。{'\n'}你的数据仍然安全。
           </PrimaryText>
           <TouchableOpacity onPress={this.handleRetry} style={styles.button} activeOpacity={0.7}>
             <PrimaryText size={14} weight="semibold" color="#fff">
-              Try Again
+              重试
             </PrimaryText>
           </TouchableOpacity>
         </View>

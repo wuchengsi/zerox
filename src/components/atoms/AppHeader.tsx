@@ -23,7 +23,7 @@ const AppHeader: React.FC<AppHeaderProps> = React.memo(
             onPress={onPress}
             style={gs.mr10}
             hitSlop={hitSlop}
-            accessibilityLabel="Go back"
+            accessibilityLabel="返回"
             accessibilityRole="button">
             <Icon name="arrow-left" size={iconSize} color={colors.primaryText} />
           </TouchableOpacity>

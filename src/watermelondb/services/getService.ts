@@ -50,7 +50,7 @@ export const getAllData = async (): Promise<ExportData | null> => {
         title: e.title,
         amount: e.amount,
         description: e.description ?? '',
-        category: {name: categoryMap.get(e.categoryId) ?? 'Unknown'},
+        category: {name: categoryMap.get(e.categoryId) ?? '未知分类'},
         date: e.date,
       })),
       currencies: currencies.map(c => ({
@@ -67,7 +67,7 @@ export const getAllData = async (): Promise<ExportData | null> => {
       debts: debts.map(d => ({
         amount: d.amount,
         description: d.description,
-        debtor: {title: debtorMap.get(d.debtorId) ?? 'Unknown'},
+        debtor: {title: debtorMap.get(d.debtorId) ?? '未知对象'},
         date: d.date,
         type: d.type,
       })),

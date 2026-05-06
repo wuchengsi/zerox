@@ -68,7 +68,7 @@ const DatePicker: React.FC<DatePickerProps> = React.memo(
             {backgroundColor: colors.secondaryAccent},
           ]}>
           <Icon name="calendar" size={18} color={colors.secondaryText} />
-          <PrimaryText size={14}>{formatDate(createdAt, 'Do MMM YYYY')}</PrimaryText>
+          <PrimaryText size={14}>{formatDate(createdAt, 'YYYY年M月D日')}</PrimaryText>
         </TouchableOpacity>
 
         {Platform.OS === 'android' && showDatePicker && (

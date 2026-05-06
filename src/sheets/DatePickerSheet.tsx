@@ -35,10 +35,10 @@ const DatePickerSheet: React.FC<SheetProps<'date-picker-sheet'>> = props => {
       <View style={gs.pb20}>
         <View style={[gs.rowBetween, gs.px20, gs.py10]}>
           <TouchableOpacity onPress={handleCancel} style={gs.p5}>
-            <PrimaryText color={colors.accentRed}>Cancel</PrimaryText>
+            <PrimaryText color={colors.accentRed}>取消</PrimaryText>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleConfirm} style={gs.p5}>
-            <PrimaryText color={colors.accentGreen}>Done</PrimaryText>
+            <PrimaryText color={colors.accentGreen}>完成</PrimaryText>
           </TouchableOpacity>
         </View>
 

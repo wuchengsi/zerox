@@ -4,12 +4,14 @@ import advancedFormat from 'dayjs/plugin/advancedFormat';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import localeData from 'dayjs/plugin/localeData';
+import 'dayjs/locale/zh-cn';
 
 dayjs.extend(calendar);
 dayjs.extend(advancedFormat);
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 dayjs.extend(localeData);
+dayjs.locale('zh-cn');
 
 // Cache locale data - computed once at module load, not on every function call
 const MONTHS = dayjs.months();
@@ -113,12 +115,12 @@ export const getYesterday = (): Dayjs => dayjs().subtract(1, 'day');
 
 export const formatCalendar = (date: DateInput): string => {
   return parseDate(date).calendar(null, {
-    sameDay: '[Today]',
-    nextDay: '[Tomorrow]',
+    sameDay: '[今天]',
+    nextDay: '[明天]',
     nextWeek: 'dddd',
-    lastDay: '[Yesterday]',
-    lastWeek: '[Last] dddd',
-    sameElse: 'Do MMM YYYY',
+    lastDay: '[昨天]',
+    lastWeek: '[上]dddd',
+    sameElse: 'YYYY年M月D日',
   });
 };
 

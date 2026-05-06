@@ -1,61 +1,61 @@
 [
   {
     "_id": "5f75cddc0ef99a4704df8e6c",
-    "name": "Food",
+    "name": "餐饮",
     "icon": "utensils-crossed",
     "color": "#6E8E55"
   },
   {
     "_id": "5f75cddc0ef99a4704df8e6d",
-    "name": "Transportation",
+    "name": "交通",
     "icon": "bus",
     "color": "#9E8420"
   },
   {
     "_id": "5f75cddc0ef99a4704df8e6e",
-    "name": "Entertainment",
+    "name": "娱乐",
     "icon": "gamepad-2",
     "color": "#4588BB"
   },
   {
     "_id": "5f75cddc0ef99a4704df8e6f",
-    "name": "Healthcare",
+    "name": "医疗",
     "icon": "bandaid",
     "color": "#D06850"
   },
   {
     "_id": "5f75cddc0ef99a4704df8e70",
-    "name": "Shopping",
+    "name": "购物",
     "icon": "shopping-bag",
     "color": "#A870A8"
   },
   {
     "_id": "5f75cddc0ef99a4704df8e71",
-    "name": "Travel",
+    "name": "旅行",
     "icon": "plane",
     "color": "#D25555"
   },
   {
     "_id": "5f75cddc0ef99a4704df8e72",
-    "name": "Utilities",
+    "name": "生活缴费",
     "icon": "wifi",
     "color": "#BF6B30"
   },
   {
     "_id": "5f75cddc0ef99a4704df8e73",
-    "name": "Education",
+    "name": "教育",
     "icon": "notebook",
     "color": "#9575B8"
   },
   {
     "_id": "5f75cddc0ef99a4704df8e74",
-    "name": "Gifts",
+    "name": "礼物",
     "icon": "gift",
     "color": "#7D8225"
   },
   {
     "_id": "5f75cddc0ef99a4704df8e75",
-    "name": "Other",
+    "name": "其他",
     "icon": "circle-dot",
     "color": "#758595"
   }

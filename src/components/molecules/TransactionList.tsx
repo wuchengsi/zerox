@@ -222,14 +222,14 @@ const InlineUndo: React.FC<{
         {backgroundColor: colors.secondaryAccent},
       ]}>
       <PrimaryText size={13} color={colors.secondaryText}>
-        Transaction deleted
+        账单已删除
       </PrimaryText>
       <TouchableOpacity
         onPress={onUndo}
         activeOpacity={0.7}
         style={[gs.py8, gs.px14, gs.rounded10, {backgroundColor: colors.accentGreen}]}>
         <PrimaryText size={12} weight="semibold" color={colors.buttonText}>
-          Undo
+          撤销
         </PrimaryText>
       </TouchableOpacity>
     </View>

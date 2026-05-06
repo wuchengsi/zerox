@@ -27,7 +27,7 @@ const EverydayTransactionScreen = () => {
           gs.px10,
           {backgroundColor: colors.secondaryAccent},
         ]}>
-        <PrimaryText size={13} weight="semibold" style={gs.textCenter}>Total Spent</PrimaryText>
+        <PrimaryText size={13} weight="semibold" style={gs.textCenter}>当日总支出</PrimaryText>
         <PrimaryText size={13} weight="semibold" style={gs.textCenter}>
           {currencySymbol}{formatCurrency(totalAmountForTheDay)}
         </PrimaryText>
@@ -43,7 +43,7 @@ const EverydayTransactionScreen = () => {
           <Icon name="receipt" size={22} color={colors.secondaryText} />
         </View>
         <PrimaryText size={13} color={colors.secondaryText} style={gs.mt10}>
-          No transactions on {formatDateUtil(expenseDate, 'Do MMM YY')}
+          {formatDateUtil(expenseDate, 'YYYY年M月D日')} 暂无账单
         </PrimaryText>
       </View>
     ),

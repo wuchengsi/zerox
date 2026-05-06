@@ -125,7 +125,7 @@ function CustomBottomSheetComponent({
                   onPress={handleClosePress}
                   style={[gs.size35, gs.center, gs.rounded16, gs.ml12, {backgroundColor: colors.secondaryAccent}]}
                   accessibilityRole="button"
-                  accessibilityLabel="Close"
+                  accessibilityLabel="关闭"
                   hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
                   <Icon name="x" size={18} color={colors.primaryText} />
                 </TouchableOpacity>

@@ -9,9 +9,9 @@ import SvgImage2 from '../../../assets/images/6.svg';
 import {gs} from '../../styles/globalStyles';
 
 const SLIDES = [
-  {id: '1', title: 'Track Expenses', subtitle: 'Simple, fast, always offline'},
-  {id: '2', title: 'Visual Reports', subtitle: 'Understand where your money goes'},
-  {id: '3', title: 'Manage Debts', subtitle: 'Never forget who owes what'},
+  {id: '1', title: '记录支出', subtitle: '简单、快速、默认离线'},
+  {id: '2', title: '查看统计', subtitle: '了解钱花去了哪里'},
+  {id: '3', title: '管理债务', subtitle: '清楚记录谁欠谁'},
 ] as const;
 
 const SLIDE_IMAGES: Record<string, React.FC<{width: string; height: string}>> = {

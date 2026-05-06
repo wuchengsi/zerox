@@ -58,7 +58,7 @@ const IconPickerSheet: React.FC<SheetProps<'icon-picker-sheet'>> = React.memo(pr
     <CustomBottomSheet
       sheetId={props.sheetId}
       header={{
-        title: 'Select Icon',
+        title: '选择图标',
         showCloseButton: true,
         onClosePress: () => {
           SheetManager.hide(props.sheetId);
@@ -71,7 +71,7 @@ const IconPickerSheet: React.FC<SheetProps<'icon-picker-sheet'>> = React.memo(pr
           input={searchText}
           label={undefined}
           colors={colors}
-          placeholder="Search Icons"
+          placeholder="搜索图标"
           setInput={setSearchText}
           schema={undefined}
         />

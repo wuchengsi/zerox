@@ -42,9 +42,9 @@ const IndividualDebtsScreen = () => {
   }, [debtorTotal, colors]);
 
   const netLabel = useMemo(() => {
-    if (debtorTotal > 0) return 'You owe';
-    if (debtorTotal < 0) return 'Owes you';
-    return 'Settled';
+    if (debtorTotal > 0) return '你欠';
+    if (debtorTotal < 0) return '欠你';
+    return '已结清';
   }, [debtorTotal]);
 
   const ListHeader = useMemo(
@@ -60,7 +60,7 @@ const IndividualDebtsScreen = () => {
               {backgroundColor: colors.accentOrange + '14'},
             ]}>
             <PrimaryText size={11} color={colors.accentOrange} style={gs.mb5}>
-              Borrowed
+              借入
             </PrimaryText>
             <PrimaryText size={18} weight="bold" variant="number" color={colors.accentOrange}>
               {currencySymbol}{formatCurrency(totalBorrowings)}
@@ -75,7 +75,7 @@ const IndividualDebtsScreen = () => {
               {backgroundColor: colors.accentGreen + '14'},
             ]}>
             <PrimaryText size={11} color={colors.accentGreen} style={gs.mb5}>
-              Lent
+              借出
             </PrimaryText>
             <PrimaryText size={18} weight="bold" variant="number" color={colors.accentGreen}>
               {currencySymbol}{formatCurrency(totalLendings)}
@@ -124,7 +124,7 @@ const IndividualDebtsScreen = () => {
               size={13}
               weight="semibold"
               color={debtsType === 'Borrow' ? colors.buttonText : colors.secondaryText}>
-              Borrowed
+              借入
             </PrimaryText>
           </TouchableOpacity>
           <TouchableOpacity
@@ -140,7 +140,7 @@ const IndividualDebtsScreen = () => {
               size={13}
               weight="semibold"
               color={debtsType === 'Lend' ? colors.buttonText : colors.secondaryText}>
-              Lent
+              借出
             </PrimaryText>
           </TouchableOpacity>
         </View>
@@ -168,7 +168,7 @@ const IndividualDebtsScreen = () => {
           style={[gs.size50, gs.rounded8, gs.center, {backgroundColor: colors.secondaryBackground}]}
           onPress={() => navigate('AddDebtsScreen', {debtorId, debtorName})}
           hitSlop={hitSlop}
-          accessibilityLabel="Add new debt"
+          accessibilityLabel="新增债务"
           accessibilityRole="button">
           <Icon name="plus" size={30} color={colors.primaryText} />
         </TouchableOpacity>

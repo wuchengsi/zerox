@@ -44,7 +44,7 @@ const useExistingUser = () => {
   const {showDialog} = useDialog();
 
   const [fileName, setFileName] = useState<string | null>(null);
-  const [uploadMessage, setUploadMessage] = useState('Upload your file');
+  const [uploadMessage, setUploadMessage] = useState('上传文件');
   const [isSyncing, setIsSyncing] = useState(false);
   const [isSyncComplete, setIsSyncComplete] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -220,7 +220,9 @@ const useExistingUser = () => {
       if (!storagePermissionGranted) {
         const confirmed = await showDialog({
           type: 'warning',
-          message: 'Storage permission is required to upload your backup file',
+          message: '上传备份文件需要存储权限',
+          okLabel: '去设置',
+          cancelLabel: '取消',
         });
         if (confirmed) {
           Linking.openSettings();
@@ -236,7 +238,7 @@ const useExistingUser = () => {
       const {0: res} = result;
       const path = normalizePath(res.uri);
       if (!path) {
-        setUploadMessage('Invalid file path');
+        setUploadMessage('文件路径无效');
         return;
       }
 
@@ -245,14 +247,14 @@ const useExistingUser = () => {
 
       const {key} = jsonData;
       if (!key || !isValidKey(key)) {
-        setUploadMessage('Invalid key. Please upload a valid zero export file.');
+        setUploadMessage('密钥无效，请上传有效的 Zero 导出文件。');
         return;
       }
 
       const data: ImportedData = upgradeExportData(jsonData);
 
       setFileName(res.name ?? 'data.json');
-      setUploadMessage('Syncing your data...');
+      setUploadMessage('正在同步数据...');
       setIsSyncing(true);
 
       setSyncStatus(prev => ({...prev, user: 'syncing'}));
@@ -271,14 +273,14 @@ const useExistingUser = () => {
 
       setIsSyncing(false);
       setIsSyncComplete(true);
-      setUploadMessage('All data synced successfully!');
+      setUploadMessage('所有数据已同步完成！');
     } catch (error) {
       if (__DEV__) {
         console.error('Error importing data:', error);
       }
       setIsSyncing(false);
-      setSyncError('Failed to sync data. Please try again.');
-      setUploadMessage('Error syncing data. Try again.');
+      setSyncError('同步数据失败，请重试。');
+      setUploadMessage('同步数据出错，请重试。');
     }
   };
 

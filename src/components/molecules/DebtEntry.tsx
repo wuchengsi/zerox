@@ -85,7 +85,7 @@ const DebtEntry: React.FC<DebtEntryProps> = ({buttonText, route}) => {
     <PrimaryView colors={colors} style={gs.justifyBetween} dismissKeyboardOnTouch>
       <View>
         <View style={[gs.mb20, gs.mt20]}>
-          <AppHeader onPress={goBack} colors={colors} text={isAddButton ? 'Add Debt' : 'Edit Debt'} />
+          <AppHeader onPress={goBack} colors={colors} text={isAddButton ? '新增债务' : '编辑债务'} />
         </View>
 
         <PrimaryText size={12} color={colors.secondaryText} style={gs.mb8}>
@@ -94,7 +94,7 @@ const DebtEntry: React.FC<DebtEntryProps> = ({buttonText, route}) => {
         <View style={[gs.row, gs.gap8, gs.mb15]}>
           {(['Borrow', 'Lend'] as const).map(t => {
             const isSelected = debtsType === t;
-            const label = t === 'Borrow' ? 'Borrowing' : 'Lending';
+            const label = t === 'Borrow' ? '借入' : '借出';
             let bgColor = colors.secondaryAccent;
             if (isSelected && t === 'Borrow') {
               bgColor = colors.accentOrange;
@@ -128,12 +128,12 @@ const DebtEntry: React.FC<DebtEntryProps> = ({buttonText, route}) => {
           colors={colors}
           input={debtName}
           setInput={setDebtName}
-          placeholder="eg. Coffee"
-          label="Description"
+          placeholder="例如 咖啡"
+          label="说明"
           schema={expenseSchema}
         />
 
-        <PrimaryText size={12} color={colors.secondaryText} style={gs.mb5}>Amount</PrimaryText>
+        <PrimaryText size={12} color={colors.secondaryText} style={gs.mb5}>金额</PrimaryText>
         <View
           style={[
             gs.h48,
@@ -175,7 +175,7 @@ const DebtEntry: React.FC<DebtEntryProps> = ({buttonText, route}) => {
           createdAt={createdAt}
           showDatePicker={showDatePicker}
           setCreatedAt={setCreatedAt}
-          label="Date"
+          label="日期"
         />
       </View>
 
@@ -183,7 +183,7 @@ const DebtEntry: React.FC<DebtEntryProps> = ({buttonText, route}) => {
         <PrimaryButton
           onPress={isAddButton ? handleAddDebt : handleUpdateDebt}
           colors={colors}
-          buttonTitle={isAddButton ? 'Add' : 'Update'}
+          buttonTitle={isAddButton ? '新增' : '更新'}
           disabled={!isValid}
         />
       </View>

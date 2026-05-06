@@ -10,6 +10,8 @@ import PrimaryText from '../../components/atoms/PrimaryText';
 import EmptyState from '../../components/atoms/EmptyState';
 import {formatCurrency} from '../../utils/numberUtils';
 import {SheetManager} from 'react-native-actions-sheet';
+import {useDialog} from '../../context/DialogContext';
+import {getAiSettings, getMissingAiSettingsFields} from '../../services/aiSettingsService';
 import {gs, hitSlop} from '../../styles/globalStyles';
 
 const HomeScreen = () => {
@@ -30,6 +32,7 @@ const HomeScreen = () => {
     avgPerDay,
     handleMonthYearSelect,
   } = useHome();
+  const {showAlert} = useDialog();
 
   const openMonthPicker = useCallback(() => {
     void SheetManager.show('month-year-picker-sheet', {
@@ -68,7 +71,7 @@ const HomeScreen = () => {
 
         <View style={[gs.rowCenter, gs.gap8, gs.mt4]}>
           <PrimaryText size={11} color={colors.buttonText} variant="number" style={{opacity: 0.7}}>
-            {transactionCount} transaction{transactionCount === 1 ? '' : 's'}
+            {transactionCount} 条账单
           </PrimaryText>
           {/* <PrimaryText size={11} color={colors.buttonText} style={{opacity: 0.7}}>·</PrimaryText>
           <PrimaryText size={11} color={colors.buttonText} variant="number" style={{opacity: 0.7}}>
@@ -89,11 +92,26 @@ const HomeScreen = () => {
     [colors],
   );
 
+  const handleOpenAiQuickExpense = useCallback(async () => {
+    const missingFields = getMissingAiSettingsFields(getAiSettings());
+    if (missingFields.length > 0) {
+      await showAlert({
+        type: 'warning',
+        message: `请先在设置中填写：${missingFields.join('、')}`,
+        okLabel: '去设置',
+      });
+      navigate('AiSettingsScreen');
+      return;
+    }
+
+    navigate('AiQuickExpenseScreen');
+  }, [showAlert]);
+
   return (
     <>
       <PrimaryView colors={colors} useBottomPadding={false} useSidePadding={false}>
         <View style={[gs.px16, gs.mb15]}>
-          <HeaderContainer headerText={`Hey, ${userName}`} />
+          <HeaderContainer headerText={`你好，${userName}`} />
         </View>
         <TransactionList
           currencySymbol={currencySymbol}
@@ -107,12 +125,22 @@ const HomeScreen = () => {
           contentContainerStyle={gs.pb80}
         />
       </PrimaryView>
+      <View style={[gs.absolute, {bottom: 78}, gs.right15, gs.zIndex1]}>
+        <TouchableOpacity
+          style={[gs.size50, gs.rounded8, gs.center, {backgroundColor: colors.secondaryBackground}]}
+          onPress={handleOpenAiQuickExpense}
+          hitSlop={hitSlop}
+          accessibilityLabel="AI 快速记账"
+          accessibilityRole="button">
+          <Icon name="sparkles" size={26} color={colors.primaryText} />
+        </TouchableOpacity>
+      </View>
       <View style={[gs.absolute, gs.bottom15, gs.right15, gs.zIndex1]}>
         <TouchableOpacity
           style={[gs.size50, gs.rounded8, gs.center, {backgroundColor: colors.secondaryBackground}]}
           onPress={() => navigate('AddTransactionsScreen')}
           hitSlop={hitSlop}
-          accessibilityLabel="Add new transaction"
+          accessibilityLabel="新增账单"
           accessibilityRole="button">
           <Icon name="plus-circle" size={30} color={colors.primaryText} />
         </TouchableOpacity>

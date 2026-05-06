@@ -21,16 +21,15 @@ const OnboardingScreen = () => {
     <PrimaryView colors={colors} style={gs.justifyBetween}>
       <View style={gs.flex1}>
         <TouchableOpacity style={[gs.selfEnd, gs.pt5p]} onPress={handleSkip}>
-          <PrimaryText size={13} weight="medium" color={colors.secondaryText}>Skip</PrimaryText>
+          <PrimaryText size={13} weight="medium" color={colors.secondaryText}>跳过</PrimaryText>
         </TouchableOpacity>
 
         <View style={gs.pt10p}>
-          <PrimaryText size={28} weight="bold">Pick your</PrimaryText>
-          <PrimaryText size={28} weight="bold">categories</PrimaryText>
+          <PrimaryText size={28} weight="bold">选择常用分类</PrimaryText>
         </View>
 
         <PrimaryText size={14} color={colors.secondaryText} style={[gs.mt6, gs.mb20]}>
-          Select the ones you want to track
+          选择你想记录的支出类型
         </PrimaryText>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[gs.row, gs.wrap, gs.pb80]}>
@@ -71,7 +70,7 @@ const OnboardingScreen = () => {
           })}
         </ScrollView>
       </View>
-      <PrimaryButton onPress={handleSubmit} colors={colors} buttonTitle={'Continue'} />
+      <PrimaryButton onPress={handleSubmit} colors={colors} buttonTitle={'继续'} />
     </PrimaryView>
   );
 };

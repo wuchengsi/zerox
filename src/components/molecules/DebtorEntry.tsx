@@ -93,10 +93,10 @@ const DebtorEntry: React.FC<DebtorEntryProps> = ({type, route}) => {
     <PrimaryView colors={colors} style={gs.justifyBetween} dismissKeyboardOnTouch>
       <View>
         <View style={[gs.mb20, gs.mt20]}>
-          <AppHeader onPress={goBack} colors={colors} text={isAddButton ? 'Add Person' : 'Edit Person'} />
+          <AppHeader onPress={goBack} colors={colors} text={isAddButton ? '新增对象' : '编辑对象'} />
         </View>
 
-        <PrimaryText size={12} color={colors.secondaryText} style={gs.mb8}>Type</PrimaryText>
+        <PrimaryText size={12} color={colors.secondaryText} style={gs.mb8}>类型</PrimaryText>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={gs.mb15}>
           <CategoryContainer
             categories={debtCategories}
@@ -110,15 +110,15 @@ const DebtorEntry: React.FC<DebtorEntryProps> = ({type, route}) => {
           colors={colors}
           input={debtorTitle}
           setInput={setDebtorTitle}
-          placeholder="eg. John Doe or Axis"
-          label="Name"
+          placeholder="例如 小王或银行卡"
+          label="名称"
           schema={nameSchema}
         />
       </View>
       <PrimaryButton
         onPress={isAddButton ? handleAddDebtor : handleUpdateDebtor}
         colors={colors}
-        buttonTitle={isAddButton ? 'Add' : 'Update'}
+        buttonTitle={isAddButton ? '新增' : '更新'}
         disabled={!isValid}
       />
     </PrimaryView>

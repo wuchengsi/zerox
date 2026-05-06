@@ -64,12 +64,11 @@ const ExistingUserScreen = () => {
     <PrimaryView colors={colors} style={gs.justifyBetween}>
       <View>
           <View style={gs.pt10p}>
-            <PrimaryText size={28} weight="bold">Restore your</PrimaryText>
-            <PrimaryText size={28} weight="bold">data</PrimaryText>
+            <PrimaryText size={28} weight="bold">恢复数据</PrimaryText>
           </View>
 
           <PrimaryText size={14} color={colors.secondaryText} style={gs.mt6}>
-            Upload your exported zero backup file
+            上传你导出的 Zero 备份文件
           </PrimaryText>
 
           <TouchableOpacity
@@ -107,13 +106,13 @@ const ExistingUserScreen = () => {
                     {fileName}
                   </PrimaryText>
                   <PrimaryText size={11} color={isSyncComplete ? colors.accentGreen : colors.secondaryText}>
-                    {isSyncComplete ? 'Sync complete' : 'Syncing...'}
+                    {isSyncComplete ? '同步完成' : '同步中...'}
                   </PrimaryText>
                 </>
               ) : (
                 <>
                   <PrimaryText size={13} weight="medium">{uploadMessage}</PrimaryText>
-                  <PrimaryText size={11} color={colors.secondaryText}>Tap to select file</PrimaryText>
+                  <PrimaryText size={11} color={colors.secondaryText}>点击选择文件</PrimaryText>
                 </>
               )}
             </View>
@@ -121,27 +120,27 @@ const ExistingUserScreen = () => {
 
           {fileName && !isSyncing && (
             <TouchableOpacity onPress={reUpload} style={gs.mt10}>
-              <PrimaryText size={12} color={colors.accentOrange}>Upload different file</PrimaryText>
+              <PrimaryText size={12} color={colors.accentOrange}>选择其他文件</PrimaryText>
             </TouchableOpacity>
           )}
 
           {showSyncProgress && (
             <View style={gs.mt30}>
               <PrimaryText size={14} weight="semibold" color={isSyncComplete ? colors.accentGreen : colors.primaryText} style={gs.mb10}>
-                {isSyncComplete ? 'All done' : 'Syncing your data...'}
+                {isSyncComplete ? '全部完成' : '正在同步数据...'}
               </PrimaryText>
 
-              <SyncStatusItem label="Profile" status={syncStatus.user} colors={colors} />
-              <SyncStatusItem label="Categories" status={syncStatus.categories} count={syncStats.categories} colors={colors} />
-              <SyncStatusItem label="Expenses" status={syncStatus.expenses} count={syncStats.expenses} colors={colors} />
-              <SyncStatusItem label="Debtors" status={syncStatus.debtors} count={syncStats.debtors} colors={colors} />
-              <SyncStatusItem label="Debts" status={syncStatus.debts} count={syncStats.debts} colors={colors} />
-              <SyncStatusItem label="Currency" status={syncStatus.currencies} colors={colors} />
+              <SyncStatusItem label="用户" status={syncStatus.user} colors={colors} />
+              <SyncStatusItem label="分类" status={syncStatus.categories} count={syncStats.categories} colors={colors} />
+              <SyncStatusItem label="账单" status={syncStatus.expenses} count={syncStats.expenses} colors={colors} />
+              <SyncStatusItem label="债务对象" status={syncStatus.debtors} count={syncStats.debtors} colors={colors} />
+              <SyncStatusItem label="债务" status={syncStatus.debts} count={syncStats.debts} colors={colors} />
+              <SyncStatusItem label="货币" status={syncStatus.currencies} colors={colors} />
             </View>
           )}
         </View>
 
-      <PrimaryButton onPress={handleContinue} colors={colors} buttonTitle={'Continue'} disabled={!isSyncComplete} />
+      <PrimaryButton onPress={handleContinue} colors={colors} buttonTitle={'继续'} disabled={!isSyncComplete} />
     </PrimaryView>
   );
 };

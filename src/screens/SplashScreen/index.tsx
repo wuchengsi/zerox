@@ -17,14 +17,14 @@ const SplashScreen = () => {
         </PrimaryText>
         <View style={gs.mt10}>
           <PrimaryText size={18} color={colors.secondaryText}>
-            Count every penny.
+            认真记录每一笔。
           </PrimaryText>
           <PrimaryText size={18} color={colors.secondaryText} style={{opacity: 0.5}}>
-            Privately.
+            数据留在本地。
           </PrimaryText>
         </View>
       </View>
-      <PrimaryButton onPress={handleClick} colors={colors} buttonTitle={'Get Started'} />
+      <PrimaryButton onPress={handleClick} colors={colors} buttonTitle={'开始使用'} />
     </PrimaryView>
   );
 };

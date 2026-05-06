@@ -1,7 +1,7 @@
 import {ScrollView, Text, TouchableOpacity, View, Platform, Share} from 'react-native';
 import React, {useCallback} from 'react';
 import Icon from '../../components/atoms/Icons';
-import {goBack} from '../../utils/navigationUtils';
+import {goBack, navigate} from '../../utils/navigationUtils';
 import useSettings from './useSettings';
 import PrimaryView from '../../components/atoms/PrimaryView';
 import PrimaryText from '../../components/atoms/PrimaryText';
@@ -69,6 +69,12 @@ const SettingsScreen = () => {
     requestStorageViaDialog,
   } = useSettings();
 
+  const themeLabelMap: Record<string, string> = {
+    light: '浅色',
+    dark: '深色',
+    system: '跟随系统',
+  };
+
   const handleOpenCurrencySheet = useCallback(() => {
     void SheetManager.show('currency-picker-sheet', {
       payload: {
@@ -98,7 +104,7 @@ const SettingsScreen = () => {
 
         await Share.share({
           url: `file://${path}`,
-          title: 'Export Zero Data',
+          title: '导出 Zero 数据',
         });
 
         handleExportResult(true);
@@ -140,7 +146,7 @@ const SettingsScreen = () => {
         <TouchableOpacity onPress={() => goBack()} hitSlop={hitSlop}>
           <Icon name="arrow-left" size={22} color={colors.primaryText} />
         </TouchableOpacity>
-        <PrimaryText size={22} weight="semibold">Settings</PrimaryText>
+        <PrimaryText size={22} weight="semibold">设置</PrimaryText>
       </View>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={gs.pb80}>
         <PrimaryText
@@ -148,21 +154,21 @@ const SettingsScreen = () => {
           weight="semibold"
           color={colors.accentGreen}
           style={[gs.mt20, gs.mb6, {letterSpacing: 0.8}]}>
-          PERSONALIZATION
+          个性化
         </PrimaryText>
         <View style={[gs.rounded12, gs.overflowHidden, {backgroundColor: colors.containerColor}]}>
           <SettingsRow
             colors={colors}
             icon="sun-moon"
-            label="Theme"
-            value={selectedTheme.charAt(0).toUpperCase() + selectedTheme.slice(1)}
+            label="主题"
+            value={themeLabelMap[selectedTheme] ?? selectedTheme}
             onPress={openThemePicker}
           />
           <View style={[gs.mx16, {height: 1, backgroundColor: colors.secondaryAccent}]} />
           <SettingsRow
             colors={colors}
             icon="user"
-            label="Name"
+            label="昵称"
             value={userName}
             onPress={() => {
               void SheetManager.show('change-name-sheet', {
@@ -179,7 +185,7 @@ const SettingsScreen = () => {
           <SettingsRow
             colors={colors}
             icon="banknote"
-            label="Currency"
+            label="货币"
             onPress={handleOpenCurrencySheet}
             valueNode={
               <View style={gs.itemsEnd}>
@@ -195,22 +201,39 @@ const SettingsScreen = () => {
           weight="semibold"
           color={colors.accentGreen}
           style={[gs.mt20, gs.mb6, {letterSpacing: 0.8}]}>
-          YOUR DATA
+          AI 快速记账
+        </PrimaryText>
+        <View style={[gs.rounded12, gs.overflowHidden, {backgroundColor: colors.containerColor}]}>
+          <SettingsRow
+            colors={colors}
+            icon="bot"
+            label="LLM API 配置"
+            subtitle="OpenAI 兼容接口，本地保存 API Key"
+            onPress={() => navigate('AiSettingsScreen')}
+          />
+        </View>
+
+        <PrimaryText
+          size={11}
+          weight="semibold"
+          color={colors.accentGreen}
+          style={[gs.mt20, gs.mb6, {letterSpacing: 0.8}]}>
+          数据
         </PrimaryText>
         <View style={[gs.rounded12, gs.overflowHidden, {backgroundColor: colors.containerColor}]}>
           <SettingsRow
             colors={colors}
             icon="download"
-            label="Export data"
-            subtitle="Import on a new device later"
+            label="导出数据"
+            subtitle="稍后可在新设备导入"
             onPress={() => exportData(allData)}
           />
           <View style={[gs.mx16, {height: 1, backgroundColor: colors.secondaryAccent}]} />
           <SettingsRow
             colors={colors}
             icon="trash-2"
-            label="Delete all data"
-            subtitle="This action cannot be undone"
+            label="删除所有数据"
+            subtitle="此操作无法撤销"
             onPress={handleDeleteAllData}
             destructive
           />
@@ -221,61 +244,61 @@ const SettingsScreen = () => {
           weight="semibold"
           color={colors.accentGreen}
           style={[gs.mt20, gs.mb6, {letterSpacing: 0.8}]}>
-          ABOUT
+          关于
         </PrimaryText>
         <View style={[gs.rounded12, gs.overflowHidden, {backgroundColor: colors.containerColor}]}>
           <SettingsRow
             colors={colors}
             icon="bug"
-            label="Report a bug"
-            subtitle="Found an issue? Let us know"
+            label="反馈问题"
+            subtitle="发现问题？告诉我们"
             onPress={handleReportBug}
           />
           <View style={[gs.mx16, {height: 1, backgroundColor: colors.secondaryAccent}]} />
           <SettingsRow
             colors={colors}
             icon="star"
-            label="Rate the app"
-            subtitle="Enjoying zero? Your feedback helps!"
+            label="给应用评分"
+            subtitle="你的反馈会帮助 Zero 变得更好"
             onPress={handleRateNow}
           />
           <View style={[gs.mx16, {height: 1, backgroundColor: colors.secondaryAccent}]} />
           <SettingsRow
             colors={colors}
             icon="code"
-            label="Source code"
-            subtitle="Explore on GitHub"
+            label="源代码"
+            subtitle="在 GitHub 查看"
             onPress={handleGithub}
           />
           <View style={[gs.mx16, {height: 1, backgroundColor: colors.secondaryAccent}]} />
           <SettingsRow
             colors={colors}
             icon="shield"
-            label="Privacy Policy"
+            label="隐私政策"
             onPress={handlePrivacyPolicy}
           />
           <View style={[gs.mx16, {height: 1, backgroundColor: colors.secondaryAccent}]} />
           <SettingsRow
             colors={colors}
             icon="file-text"
-            label="Terms & Conditions"
+            label="服务条款"
             onPress={handleTermsAndConditions}
           />
           <View style={[gs.mx16, {height: 1, backgroundColor: colors.secondaryAccent}]} />
           <SettingsRow
             colors={colors}
             icon="info"
-            label="Version"
+            label="版本"
             value={`v${appVersion}`}
           />
         </View>
 
         <View style={[gs.mt20, gs.mb10, gs.center, gs.gap2]}>
           <PrimaryText size={11} color={colors.secondaryText}>
-            Embrace the simplicity of zero
+            保持简单，清楚记账
           </PrimaryText>
           <PrimaryText size={11} color={colors.secondaryText}>
-            Made with <Text style={{color: colors.accentGreen}}>passion</Text> in India
+            使用 <Text style={{color: colors.accentGreen}}>Zero</Text> 管理日常支出
           </PrimaryText>
         </View>
       </ScrollView>

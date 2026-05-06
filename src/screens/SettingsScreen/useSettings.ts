@@ -132,7 +132,9 @@ const useSettings = () => {
   const handleDeleteAllData = useCallback(async () => {
     const confirmed = await showDialog({
       type: 'warning',
-      message: 'Are you sure you want to delete all your data?',
+      message: '确定要删除所有数据吗？',
+      okLabel: '删除',
+      cancelLabel: '取消',
     });
     if (confirmed) {
       await deleteAllData();
@@ -146,12 +148,14 @@ const useSettings = () => {
       if (success) {
         await showAlert({
           type: 'success',
-          message: 'Your data is successfully exported in Downloads folder',
+          message: '数据已成功导出到下载目录',
+          okLabel: '知道了',
         });
       } else {
         await showAlert({
           type: 'error',
-          message: 'There is an error in exporting your data',
+          message: '导出数据时出错',
+          okLabel: '知道了',
         });
       }
     },
@@ -161,7 +165,9 @@ const useSettings = () => {
   const requestStorageViaDialog = useCallback(async () => {
     const confirmed = await showDialog({
       type: 'warning',
-      message: 'You need to manually give permission for the storage to download your data',
+      message: '需要手动授予存储权限后才能下载数据',
+      okLabel: '去设置',
+      cancelLabel: '取消',
     });
     if (confirmed) {
       Linking.openSettings();

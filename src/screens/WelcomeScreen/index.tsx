@@ -14,21 +14,21 @@ const WelcomeScreen = () => {
     <PrimaryView colors={colors} style={gs.justifyBetween}>
       <View style={gs.pt15p}>
         <PrimaryText size={28} weight="bold" color={colors.primaryText}>
-          Welcome to{' '}
+          欢迎使用{' '}
           <PrimaryText size={28} weight="bold" color={colors.accentGreen}>
             zero
           </PrimaryText>
         </PrimaryText>
         <PrimaryText size={14} color={colors.secondaryText} style={gs.mt6}>
-          Your finances, your device, your control.
+          你的账本，留在你的设备上。
         </PrimaryText>
       </View>
 
       <Carousel />
 
       <View style={gs.gap12}>
-        <PrimaryButton onPress={handleNewUser} colors={colors} buttonTitle={'Get Started'} />
-        <PrimaryButton onPress={handleAllreadyUser} colors={colors} buttonTitle={'I have a backup'} variant="outline" />
+        <PrimaryButton onPress={handleNewUser} colors={colors} buttonTitle={'开始使用'} />
+        <PrimaryButton onPress={handleAllreadyUser} colors={colors} buttonTitle={'我有备份'} variant="outline" />
       </View>
     </PrimaryView>
   );

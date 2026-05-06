@@ -48,7 +48,7 @@ const ColorPickerSheet: React.FC<SheetProps<'color-picker-sheet'>> = React.memo(
     <CustomBottomSheet
       sheetId={props.sheetId}
       header={{
-        title: 'Select Color',
+        title: '选择颜色',
         showCloseButton: true,
         onClosePress: () => {
           SheetManager.hide(props.sheetId);

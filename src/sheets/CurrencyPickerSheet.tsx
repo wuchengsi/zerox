@@ -84,7 +84,7 @@ const CurrencyPickerSheet: React.FC<SheetProps<'currency-picker-sheet'>> = React
     <CustomBottomSheet
       sheetId={props.sheetId}
       header={{
-        title: 'Select Currency',
+        title: '选择货币',
         showCloseButton: true,
         onClosePress: () => void SheetManager.hide(props.sheetId),
       }}
@@ -109,7 +109,7 @@ const CurrencyPickerSheet: React.FC<SheetProps<'currency-picker-sheet'>> = React
             style={[gs.px15, gs.h48, gs.wFull, gs.fontMedium, gs.noFontPadding, {color: colors.primaryText}]}
             value={searchText}
             onChangeText={setSearchText}
-            placeholder="Search currency..."
+            placeholder="搜索货币..."
             placeholderTextColor={colors.secondaryText}
           />
         </View>
@@ -123,7 +123,7 @@ const CurrencyPickerSheet: React.FC<SheetProps<'currency-picker-sheet'>> = React
           />
         </View>
 
-        <PrimaryButton onPress={handleConfirm} colors={colors} buttonTitle="Update" disabled={!selectedCurrency} />
+        <PrimaryButton onPress={handleConfirm} colors={colors} buttonTitle="更新" disabled={!selectedCurrency} />
       </View>
     </CustomBottomSheet>
   );
