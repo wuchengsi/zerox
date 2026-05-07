@@ -2,7 +2,8 @@ import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import HomeScreen from '../screens/HomeScreen';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {Platform, Pressable, Text, View} from 'react-native';
+import {BackHandler, Platform, Pressable, Text, ToastAndroid, View} from 'react-native';
+import {useFocusEffect} from '@react-navigation/native';
 import Icon from '../components/atoms/Icons';
 import useThemeColors from '../hooks/useThemeColors';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -23,6 +24,8 @@ import CategoryTransactionScreen from '../screens/CategoryTransactionScreen';
 import UpdateDebtorScreen from '../screens/UpdateDebtorScreen';
 import AiQuickExpenseScreen from '../screens/AiQuickExpenseScreen';
 import AiSettingsScreen from '../screens/AiSettingsScreen';
+import AiExpenseQueueScreen from '../screens/AiExpenseQueueScreen';
+import AiExpenseQueueDetailScreen from '../screens/AiExpenseQueueDetailScreen';
 import {gs} from '../styles/globalStyles';
 
 const screenOptions = {
@@ -77,6 +80,29 @@ const TabBarButton = (props: any) => (
 const TabStack = () => {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
+  const lastBackPressRef = React.useRef(0);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (Platform.OS !== 'android') {
+        return undefined;
+      }
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+        const now = Date.now();
+        if (now - lastBackPressRef.current < 2000) {
+          BackHandler.exitApp();
+          return true;
+        }
+
+        lastBackPressRef.current = now;
+        ToastAndroid.show('再按一次退出', ToastAndroid.SHORT);
+        return true;
+      });
+
+      return () => subscription.remove();
+    }, []),
+  );
 
   const bottomPadding = Math.max(insets.bottom, 8);
 
@@ -133,6 +159,8 @@ const HomeStack = () => {
       <Stack.Screen name="UpdateDebtorScreen" component={UpdateDebtorScreen} />
       <Stack.Screen name="AiQuickExpenseScreen" component={AiQuickExpenseScreen} />
       <Stack.Screen name="AiSettingsScreen" component={AiSettingsScreen} />
+      <Stack.Screen name="AiExpenseQueueScreen" component={AiExpenseQueueScreen} />
+      <Stack.Screen name="AiExpenseQueueDetailScreen" component={AiExpenseQueueDetailScreen} />
     </Stack.Navigator>
   );
 };

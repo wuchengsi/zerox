@@ -24,6 +24,7 @@ interface CustomInputProps {
   leftIcon?: string;
   rightIcon?: string;
   onRightIconPress?: () => void;
+  showClearButton?: boolean;
   disabled?: boolean;
 }
 
@@ -45,6 +46,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
   leftIcon,
   rightIcon,
   onRightIconPress,
+  showClearButton = false,
   disabled = false,
 }) => {
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -54,7 +56,8 @@ const CustomInput: React.FC<CustomInputProps> = ({
 
   const hasLeftIcon = !!leftIcon;
   const hasRightIcon = !!rightIcon;
-  const hasIcons = hasLeftIcon || hasRightIcon;
+  const hasClearButton = showClearButton && input.length > 0 && !disabled;
+  const hasIcons = hasLeftIcon || hasRightIcon || hasClearButton;
 
   const inputBorderColor = useMemo(() => {
     return isFocused ? colors.primaryText : 'transparent';
@@ -114,7 +117,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
         <TextInput
           style={
             hasIcons
-              ? [gs.px15, gs.h48, gs.wFull, gs.fontMedium, gs.noFontPadding, {color: colors.primaryText}]
+              ? [gs.flex1, gs.px15, gs.h48, gs.fontMedium, gs.noFontPadding, {color: colors.primaryText}]
               : [
                   gs.h48,
                   gs.rounded12,
@@ -138,8 +141,21 @@ const CustomInput: React.FC<CustomInputProps> = ({
           maxLength={maxLength}
           editable={!disabled}
         />
+        {hasClearButton && (
+          <TouchableOpacity
+            onPress={() => setInput('')}
+            style={[gs.ml8, !hasRightIcon ? gs.mr10 : undefined]}
+            accessibilityRole="button"
+            accessibilityLabel="清空输入">
+            <Icon name="x" size={18} color={colors.secondaryText} />
+          </TouchableOpacity>
+        )}
         {hasRightIcon && (
-          <TouchableOpacity onPress={onRightIconPress} disabled={!onRightIconPress} style={gs.ml8}>
+          <TouchableOpacity
+            onPress={onRightIconPress}
+            disabled={!onRightIconPress}
+            style={[gs.ml8, gs.mr10]}
+            accessibilityRole="button">
             <Icon name={rightIcon} size={20} color={colors.secondaryText} />
           </TouchableOpacity>
         )}

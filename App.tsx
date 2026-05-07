@@ -12,6 +12,7 @@ import {ThemeProvider} from './src/context/ThemeContext';
 import {DialogProvider} from './src/context/DialogContext';
 import {SheetProvider} from 'react-native-actions-sheet';
 import ErrorBoundary from './src/components/atoms/ErrorBoundary';
+import AiAutoExpenseRecovery from './src/components/atoms/AiAutoExpenseRecovery';
 import {initBackend} from './src/backend';
 import './src/sheets/sheets';
 import './src/utils/globalErrorHandler';
@@ -32,6 +33,7 @@ const App = () => {
               <ThemeProvider>
                 <DialogProvider>
                   <SheetProvider>
+                    <AiAutoExpenseRecovery />
                     <NavigationContainer ref={setNavigationRef}>
                       <MainStack />
                     </NavigationContainer>
