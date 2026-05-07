@@ -21,6 +21,19 @@ export interface AiAutoExpenseTask {
   skippedCount?: number;
   createdCount?: number;
   expenseIds?: string[];
+  resultItems?: AiAutoExpenseTaskResultItem[];
+}
+
+export interface AiAutoExpenseTaskResultItem {
+  localId: string;
+  title: string;
+  amount: number | null;
+  categoryName: string;
+  categoryId: string | null;
+  date: string;
+  status: 'created' | 'skipped';
+  expenseId?: string;
+  issues: string[];
 }
 
 export interface AiLastAutoCreateBatch {
@@ -166,6 +179,31 @@ export const getNextAiAutoExpenseTask = (): AiAutoExpenseTask | null => {
     .filter(task => task.status === 'queued' || task.status === 'running')
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   return runnable[0] ?? null;
+};
+
+export const requeueInterruptedAiAutoExpenseTasks = (): AiAutoExpenseTask[] => {
+  const tasks = getAiAutoExpenseTasks();
+  const timestamp = now();
+  let changed = false;
+  const nextTasks = tasks.map(task => {
+    if (task.status !== 'running') {
+      return task;
+    }
+
+    changed = true;
+    return {
+      ...task,
+      status: 'queued' as AiAutoExpenseTaskStatus,
+      updatedAt: timestamp,
+      errorMessage: '上次处理中断，已重新排队',
+    };
+  });
+
+  if (changed) {
+    saveAiAutoExpenseTasks(nextTasks);
+  }
+
+  return getAiAutoExpenseTasks();
 };
 
 export const getAiAutoExpenseInput = (): string =>

@@ -55,6 +55,9 @@ const getStatusText = (task: AiAutoExpenseTask): string => {
   }
 };
 
+const isRetryableTask = (task: AiAutoExpenseTask): boolean =>
+  task.status === 'failed' || task.status === 'partial_failed';
+
 const AiExpenseQueueDetailScreen = () => {
   const colors = useThemeColors();
   const {showAlert, showDialog} = useDialog();
@@ -76,7 +79,7 @@ const AiExpenseQueueDetailScreen = () => {
       subscribeAiAutoExpenseTasks(() => {
         const nextTask = getAiAutoExpenseTaskById(route.params.taskId);
         setTask(nextTask);
-        if (nextTask && nextTask.status !== 'failed') {
+        if (nextTask && !isRetryableTask(nextTask)) {
           setRetryInput(nextTask.input);
         }
       }),
@@ -176,7 +179,8 @@ const AiExpenseQueueDetailScreen = () => {
     );
   }
 
-  const canRetry = task.status === 'failed';
+  const canRetry = isRetryableTask(task);
+  const hasResultItems = (task.resultItems?.length ?? 0) > 0;
 
   return (
     <PrimaryView colors={colors} dismissKeyboardOnTouch>
@@ -196,11 +200,51 @@ const AiExpenseQueueDetailScreen = () => {
             时间：{formatDate(task.createdAt, 'YYYY年M月D日 HH:mm')}
           </PrimaryText>
           {task.errorMessage ? (
-            <PrimaryText size={12} color={task.status === 'failed' ? colors.accentRed : colors.secondaryText} style={{lineHeight: 18}}>
+            <PrimaryText
+              size={12}
+              color={canRetry ? colors.accentRed : colors.secondaryText}
+              style={{lineHeight: 18}}>
               {task.errorMessage}
             </PrimaryText>
           ) : null}
         </View>
+
+        {hasResultItems ? (
+          <View style={[gs.rounded12, gs.p14, gs.mb10, {backgroundColor: colors.containerColor}]}>
+            <PrimaryText size={13} weight="semibold" style={gs.mb8}>
+              解析明细
+            </PrimaryText>
+            {task.resultItems?.map(item => {
+              const isCreated = item.status === 'created';
+              return (
+                <View
+                  key={item.localId}
+                  style={[
+                    gs.py8,
+                    gs.borderBottom1,
+                    {borderBottomColor: colors.secondaryAccent},
+                  ]}>
+                  <View style={gs.rowBetweenCenter}>
+                    <PrimaryText size={12} weight="semibold" style={gs.flex1} numberOfLines={1}>
+                      {item.title || '未识别标题'}
+                    </PrimaryText>
+                    <PrimaryText size={12} color={isCreated ? colors.accentGreen : colors.accentRed}>
+                      {isCreated ? '已添加' : '已跳过'}
+                    </PrimaryText>
+                  </View>
+                  <PrimaryText size={11} color={colors.secondaryText} style={gs.mt4}>
+                    金额：{item.amount ?? '未识别'} · 分类：{item.categoryName || '未识别'}
+                  </PrimaryText>
+                  {!isCreated && item.issues.length > 0 ? (
+                    <PrimaryText size={11} color={colors.accentRed} style={[gs.mt4, {lineHeight: 16}]}>
+                      原因：{item.issues.join('、')}
+                    </PrimaryText>
+                  ) : null}
+                </View>
+              );
+            })}
+          </View>
+        ) : null}
 
         <View style={[gs.rowBetweenCenter, gs.mb5]}>
           <PrimaryText size={12} color={colors.secondaryText}>
