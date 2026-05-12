@@ -13,6 +13,7 @@ export interface IncomeData {
 }
 
 export interface IncomeWithCategory extends IncomeData {
+  transactionType?: 'income';
   category?: {
     id: string;
     name: string;
@@ -32,6 +33,7 @@ const mapIncome = (
   userId: income.userId,
   date: income.date,
   category: categoryMap?.get(income.categoryId),
+  transactionType: 'income',
 });
 
 export const createIncome = async (
@@ -128,4 +130,23 @@ export const getIncomeById = async (
   } catch {
     return null;
   }
+};
+
+export const getAvailableIncomeYears = async (
+  userId: string,
+): Promise<number[]> => {
+  const incomes = await database
+    .get<Income>('incomes')
+    .query(Q.where('user_id', userId))
+    .fetch();
+
+  const years = new Set<number>();
+  for (const income of incomes) {
+    const year = Number.parseInt(income.date.substring(0, 4), 10);
+    if (!Number.isNaN(year)) {
+      years.add(year);
+    }
+  }
+
+  return Array.from(years).sort((a, b) => a - b);
 };

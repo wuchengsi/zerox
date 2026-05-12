@@ -17,7 +17,7 @@ import {fetchUserData, selectUserId} from '../../redux/slice/userIdSlice';
 import {fetchCurrency, selectCurrencySymbol} from '../../redux/slice/currencyDataSlice';
 import {fetchCategories} from '../../redux/slice/categoryDataSlice';
 import {getCurrentYear, getMonthNumber, getMonthNames, sortByDateDesc} from '../../utils/dateUtils';
-import {ExpenseData as Expense, IncomeWithCategory} from '../../watermelondb/services';
+import {ExpenseWithCategory as Expense, IncomeWithCategory} from '../../watermelondb/services';
 import {AppDispatch} from '../../redux/store';
 import {loadAvailableYears} from '../../utils/availableYearsCache';
 import {useFocusEffect} from '@react-navigation/native';
@@ -39,17 +39,7 @@ const useHome = () => {
   const allTransactions = useSelector(selectExpenseData) ?? [];
   const allIncomes = useSelector(selectIncomeData) ?? [];
   const sortedTransactions = useMemo(
-    () =>
-      sortByDateDesc([
-        ...(allTransactions as Expense[]).map(transaction => ({
-          ...transaction,
-          transactionType: 'expense' as const,
-        })),
-        ...(allIncomes as IncomeWithCategory[]).map(income => ({
-          ...income,
-          transactionType: 'income' as const,
-        })),
-      ]),
+    () => sortByDateDesc([...(allTransactions as Expense[]), ...(allIncomes as IncomeWithCategory[])]),
     [allTransactions, allIncomes],
   );
 
@@ -79,8 +69,6 @@ const useHome = () => {
   useFocusEffect(
     useCallback(() => {
       if (userId) {
-        dispatch(invalidateExpenseCache());
-        dispatch(invalidateIncomeCache());
         dispatch(fetchExpensesByMonth(yearMonth));
         dispatch(fetchIncomesByMonth(yearMonth));
       }

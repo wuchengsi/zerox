@@ -1,6 +1,6 @@
 import {RefreshControl, View} from 'react-native';
 import {TouchableOpacity} from 'react-native-gesture-handler';
-import React, {useCallback, useMemo, useRef, memo} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState, memo} from 'react';
 import Animated, {SharedValue, useAnimatedStyle, interpolate} from 'react-native-reanimated';
 import useThemeColors, {Colors} from '../../hooks/useThemeColors';
 import Icon from '../atoms/Icons';
@@ -19,7 +19,7 @@ import {fetchIncomesByMonth, invalidateIncomeCache} from '../../redux/slice/inco
 import PrimaryText from '../atoms/PrimaryText';
 import {fetchEverydayExpenses} from '../../redux/slice/everydayExpenseDataSlice';
 import {formatCurrency} from '../../utils/numberUtils';
-import {FlashList, useRecyclingState} from '@shopify/flash-list';
+import {FlashList} from '@shopify/flash-list';
 import {AppDispatch} from '../../redux/store';
 import {gs} from '../../styles/globalStyles';
 
@@ -61,18 +61,6 @@ interface TransactionListProps {
   contentContainerStyle?: {paddingBottom?: number};
 }
 
-interface TransactionItemProps {
-  currencySymbol: string;
-  expense?: Array<Transaction>;
-  colors: Colors;
-  dispatch: AppDispatch;
-  label: string;
-  targetDate?: string;
-  targetMonth?: string;
-  openSwipeableRef: React.RefObject<{close: () => void} | null>;
-  edgeToEdge: boolean;
-}
-
 interface ExpenseRowProps {
   expense: Transaction;
   colors: Colors;
@@ -83,11 +71,9 @@ interface ExpenseRowProps {
   edgeToEdge: boolean;
 }
 
-interface GroupedExpense {
-  date: string;
-  expenses: Array<Transaction>;
-  label: string;
-}
+type TransactionListItem =
+  | {itemType: 'header'; id: string; label: string}
+  | {itemType: 'transaction'; id: string; transaction: Transaction};
 
 const ACTION_WIDTH = 50;
 const EDGE_INSET = 16;
@@ -263,112 +249,6 @@ const InlineUndo: React.FC<{
   </View>
 ));
 
-const TransactionItem: React.FC<TransactionItemProps> = React.memo(
-  ({currencySymbol, expense: initialExpense, colors, dispatch, label, targetDate, targetMonth, openSwipeableRef, edgeToEdge}) => {
-    const deletionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    const [expenses, setExpenses] = useRecyclingState<Array<Transaction>>(initialExpense || [], [initialExpense], () => {
-      if (deletionTimeoutRef.current) {
-        clearTimeout(deletionTimeoutRef.current);
-      }
-    });
-    const [deletedItemId, setDeletedItemId] = useRecyclingState<string | null>(null, [initialExpense]);
-    const deletedItemRef = useRef<Transaction | null>(null);
-
-    const handleEdit = useCallback((expense: Transaction) => {
-      if (expense.transactionType === 'income') {
-        navigate('UpdateIncomeScreen', {
-          incomeId: String(expense.id),
-          incomeTitle: expense.title,
-          category: expense.category,
-          incomeDate: expense.date,
-          incomeAmount: expense.amount,
-        });
-        return;
-      }
-
-      navigate('UpdateTransactionScreen', {
-        expenseId: String(expense.id),
-        expenseTitle: expense.title,
-        category: expense.category,
-        expenseDate: expense.date,
-        expenseAmount: expense.amount,
-      });
-    }, []);
-
-    const handleDelete = useCallback(
-      (expense: Transaction) => {
-        const expenseId = String(expense.id);
-        const deletedExpense = expenses.find(expense => String(expense.id) === expenseId) ?? null;
-        deletedItemRef.current = deletedExpense;
-        setDeletedItemId(expenseId);
-
-        if (deletionTimeoutRef.current) {
-          clearTimeout(deletionTimeoutRef.current);
-        }
-
-        deletionTimeoutRef.current = setTimeout(async () => {
-          setExpenses(prev => prev.filter(e => String(e.id) !== expenseId));
-          setDeletedItemId(null);
-          deletedItemRef.current = null;
-          if (expense.transactionType === 'income') {
-            await deleteIncomeById(expenseId);
-            dispatch(invalidateIncomeCache());
-            if (targetMonth) {
-              dispatch(fetchIncomesByMonth(targetMonth));
-            }
-          } else {
-            await deleteExpenseById(expenseId);
-            dispatch(invalidateExpenseCache());
-            if (targetMonth) {
-              dispatch(fetchExpensesByMonth(targetMonth));
-            } else {
-              dispatch(fetchExpenses());
-            }
-            if (targetDate) {
-              dispatch(fetchEverydayExpenses(targetDate));
-            }
-          }
-        }, 3000);
-      },
-      [expenses, dispatch, targetDate, targetMonth, setExpenses, setDeletedItemId],
-    );
-
-    const handleUndo = useCallback(() => {
-      if (deletionTimeoutRef.current) {
-        clearTimeout(deletionTimeoutRef.current);
-        deletionTimeoutRef.current = null;
-      }
-      setDeletedItemId(null);
-      deletedItemRef.current = null;
-    }, [setDeletedItemId]);
-
-    return (
-      <View>
-        <PrimaryText size={12} weight="semibold" color={colors.secondaryText} style={[gs.mb8, gs.mt15, edgeToEdge && gs.px16]}>
-          {label}
-        </PrimaryText>
-        {expenses.map(item =>
-          String(item.id) === deletedItemId ? (
-            <InlineUndo key={String(item.id)} colors={colors} onUndo={handleUndo} edgeToEdge={edgeToEdge} />
-          ) : (
-            <ExpenseRow
-              key={String(item.id)}
-              expense={item}
-              colors={colors}
-              currencySymbol={currencySymbol}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              openSwipeableRef={openSwipeableRef}
-              edgeToEdge={edgeToEdge}
-            />
-          ),
-        )}
-      </View>
-    );
-  },
-);
-
 const TransactionList: React.FC<TransactionListProps> = ({
   currencySymbol,
   allExpenses,
@@ -384,8 +264,19 @@ const TransactionList: React.FC<TransactionListProps> = ({
   const colors = useThemeColors();
   const dispatch = useDispatch<AppDispatch>();
   const openSwipeableRef = useRef<{close: () => void} | null>(null);
+  const deletionTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<string>>(() => new Set());
+  const listScopeKey = targetMonth ?? targetDate ?? 'all-transactions';
 
-  const groupedData: GroupedExpense[] = useMemo(() => {
+  useEffect(
+    () => () => {
+      deletionTimeoutsRef.current.forEach(timeout => clearTimeout(timeout));
+      deletionTimeoutsRef.current.clear();
+    },
+    [],
+  );
+
+  const listData: TransactionListItem[] = useMemo(() => {
     const groupedExpenses = new Map<string, Array<Transaction>>();
 
     allExpenses?.forEach(expense => {
@@ -399,30 +290,132 @@ const TransactionList: React.FC<TransactionListProps> = ({
       return new Date(b).getTime() - new Date(a).getTime();
     });
 
-    return sortedDates.map(date => ({
-      date,
-      expenses: (groupedExpenses.get(date) ?? []).sort((a, b) =>
+    return sortedDates.flatMap(date => {
+      const transactions = (groupedExpenses.get(date) ?? []).sort((a, b) =>
         b.date.localeCompare(a.date),
-      ),
-      label: formatCalendar(date),
-    }));
+      );
+      return [
+        {itemType: 'header' as const, id: `header-${date}`, label: formatCalendar(date)},
+        ...transactions.map(transaction => ({
+          itemType: 'transaction' as const,
+          id: `${transaction.transactionType ?? 'expense'}-${String(transaction.id)}`,
+          transaction,
+        })),
+      ];
+    });
   }, [allExpenses]);
 
-  const renderGroupItem = useCallback(
-    ({item}: {item: GroupedExpense}) => (
-      <TransactionItem
-        currencySymbol={currencySymbol}
-        expense={item.expenses}
-        colors={colors}
-        dispatch={dispatch}
-        targetDate={targetDate}
-        targetMonth={targetMonth}
-        label={item.label}
-        openSwipeableRef={openSwipeableRef}
-        edgeToEdge={edgeToEdge}
-      />
-    ),
-    [currencySymbol, colors, dispatch, targetDate, targetMonth, edgeToEdge],
+  const handleEdit = useCallback((expense: Transaction) => {
+    if (expense.transactionType === 'income') {
+      navigate('UpdateIncomeScreen', {
+        incomeId: String(expense.id),
+        incomeTitle: expense.title,
+        category: expense.category,
+        incomeDate: expense.date,
+        incomeAmount: expense.amount,
+      });
+      return;
+    }
+
+    navigate('UpdateTransactionScreen', {
+      expenseId: String(expense.id),
+      expenseTitle: expense.title,
+      category: expense.category,
+      expenseDate: expense.date,
+      expenseAmount: expense.amount,
+    });
+  }, []);
+
+  const removePendingDeleteId = useCallback((deleteKey: string) => {
+    setPendingDeleteIds(prev => {
+      if (!prev.has(deleteKey)) {
+        return prev;
+      }
+      const next = new Set(prev);
+      next.delete(deleteKey);
+      return next;
+    });
+  }, []);
+
+  const handleDelete = useCallback(
+    (expense: Transaction) => {
+      const expenseId = String(expense.id);
+      const deleteKey = `${expense.transactionType ?? 'expense'}-${expenseId}`;
+      setPendingDeleteIds(prev => new Set(prev).add(deleteKey));
+
+      const existingTimeout = deletionTimeoutsRef.current.get(deleteKey);
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+      }
+
+      const timeout = setTimeout(async () => {
+        deletionTimeoutsRef.current.delete(deleteKey);
+        removePendingDeleteId(deleteKey);
+        if (expense.transactionType === 'income') {
+          await deleteIncomeById(expenseId);
+          dispatch(invalidateIncomeCache());
+          if (targetMonth) {
+            dispatch(fetchIncomesByMonth(targetMonth));
+          }
+          return;
+        }
+
+        await deleteExpenseById(expenseId);
+        dispatch(invalidateExpenseCache());
+        if (targetMonth) {
+          dispatch(fetchExpensesByMonth(targetMonth));
+        } else {
+          dispatch(fetchExpenses());
+        }
+        if (targetDate) {
+          dispatch(fetchEverydayExpenses(targetDate));
+        }
+      }, 3000);
+
+      deletionTimeoutsRef.current.set(deleteKey, timeout);
+    },
+    [dispatch, removePendingDeleteId, targetDate, targetMonth],
+  );
+
+  const handleUndo = useCallback(
+    (deleteKey: string) => {
+      const timeout = deletionTimeoutsRef.current.get(deleteKey);
+      if (timeout) {
+        clearTimeout(timeout);
+        deletionTimeoutsRef.current.delete(deleteKey);
+      }
+      removePendingDeleteId(deleteKey);
+    },
+    [removePendingDeleteId],
+  );
+
+  const renderItem = useCallback(
+    ({item}: {item: TransactionListItem}) => {
+      if (item.itemType === 'header') {
+        return (
+          <PrimaryText size={12} weight="semibold" color={colors.secondaryText} style={[gs.mb8, gs.mt15, edgeToEdge && gs.px16]}>
+            {item.label}
+          </PrimaryText>
+        );
+      }
+
+      if (pendingDeleteIds.has(item.id)) {
+        return <InlineUndo colors={colors} onUndo={() => handleUndo(item.id)} edgeToEdge={edgeToEdge} />;
+      }
+
+      return (
+        <ExpenseRow
+          expense={item.transaction}
+          colors={colors}
+          currencySymbol={currencySymbol}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          openSwipeableRef={openSwipeableRef}
+          edgeToEdge={edgeToEdge}
+        />
+      );
+    },
+    [colors, currencySymbol, edgeToEdge, handleDelete, handleEdit, handleUndo, pendingDeleteIds],
   );
 
   const refreshControl = useMemo(
@@ -435,10 +428,12 @@ const TransactionList: React.FC<TransactionListProps> = ({
 
   return (
     <FlashList
-      data={groupedData}
-      renderItem={renderGroupItem}
-      keyExtractor={item => item.date}
-      extraData={allExpenses}
+      key={listScopeKey}
+      data={listData}
+      renderItem={renderItem}
+      keyExtractor={item => item.id}
+      extraData={pendingDeleteIds}
+      getItemType={item => item.itemType}
       ListHeaderComponent={ListHeaderComponent}
       ListEmptyComponent={ListEmptyComponent}
       refreshControl={refreshControl}

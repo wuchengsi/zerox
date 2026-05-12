@@ -5,8 +5,8 @@ export const nameSchema = z
   .refine(value => /^[A-Za-z\u4e00-\u9fa5\s]+$/.test(value), {
     message: '昵称只能包含中文、英文字母和空格。',
   })
-  .refine(value => value.length >= 3, {
-    message: '昵称至少需要 3 个字符。',
+  .refine(value => value.length >= 2, {
+    message: '昵称至少需要 2 个字符。',
   })
   .refine(value => value.length <= 50, {
     message: '昵称不能超过 50 个字符。',

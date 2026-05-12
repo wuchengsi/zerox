@@ -15,6 +15,7 @@ export interface ExpenseData {
 
 // Extended expense type with populated category
 export interface ExpenseWithCategory extends ExpenseData {
+  transactionType?: 'expense';
   category?: {
     id: string;
     name: string;
@@ -164,6 +165,7 @@ export const getAllExpensesByUserIdWithCategory = async (
       userId: e.userId,
       date: e.date,
       category,
+      transactionType: 'expense',
     };
   });
 };
@@ -205,6 +207,7 @@ export const getAllExpensesByDate = async (
       userId: e.userId,
       date: e.date,
       category,
+      transactionType: 'expense',
     };
   });
 };
@@ -241,6 +244,7 @@ export const getAllExpensesByMonth = async (
       userId: e.userId,
       date: e.date,
       category,
+      transactionType: 'expense',
     };
   });
 };
@@ -287,6 +291,7 @@ export const getAllExpensesByCategoryAndMonth = async (
     userId: e.userId,
     date: e.date,
     category: categoryMap.get(e.categoryId),
+    transactionType: 'expense',
   }));
 };
 

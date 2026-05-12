@@ -46,6 +46,7 @@ export {
   deleteIncomeById,
   getAllIncomesByMonth,
   getIncomeById,
+  getAvailableIncomeYears,
 } from './incomeService';
 export type {IncomeData, IncomeWithCategory} from './incomeService';
 

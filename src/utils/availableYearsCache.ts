@@ -1,10 +1,18 @@
 import StorageService from './asyncStorageService';
-import {getAvailableExpenseYears} from '../watermelondb/services';
+import {getCurrentYear} from './dateUtils';
+import {getAvailableExpenseYears, getAvailableIncomeYears} from '../watermelondb/services';
 
 const CACHE_KEY = 'available-expense-years';
+const CACHE_KEY_PREFIX = 'available-transaction-years';
 
-export const getCachedYears = (): number[] => {
-  const raw = StorageService.getItemSync(CACHE_KEY);
+const getCacheKey = (userId?: string): string =>
+  userId ? `${CACHE_KEY_PREFIX}:${userId}` : CACHE_KEY;
+
+const uniqueSortedYears = (years: number[]): number[] =>
+  Array.from(new Set(years.filter(year => Number.isFinite(year)))).sort((a, b) => a - b);
+
+export const getCachedYears = (userId?: string): number[] => {
+  const raw = StorageService.getItemSync(getCacheKey(userId)) ?? StorageService.getItemSync(CACHE_KEY);
   if (raw) {
     try {
       return JSON.parse(raw);
@@ -15,19 +23,17 @@ export const getCachedYears = (): number[] => {
   return [];
 };
 
-const setCachedYears = (years: number[]): void => {
-  StorageService.setItemSync(CACHE_KEY, JSON.stringify(years));
+const setCachedYears = (years: number[], userId?: string): void => {
+  StorageService.setItemSync(getCacheKey(userId), JSON.stringify(uniqueSortedYears(years)));
 };
 
 export const loadAvailableYears = async (userId: string): Promise<number[]> => {
-  const cached = getCachedYears();
-  if (cached.length > 0) {
-    return cached;
-  }
-  const years = await getAvailableExpenseYears(userId);
-  if (years.length > 0) {
-    setCachedYears(years);
-  }
+  const [expenseYears, incomeYears] = await Promise.all([
+    getAvailableExpenseYears(userId),
+    getAvailableIncomeYears(userId),
+  ]);
+  const years = uniqueSortedYears([...expenseYears, ...incomeYears, getCurrentYear()]);
+  setCachedYears(years, userId);
   return years;
 };
 
@@ -42,7 +48,11 @@ export const ensureYearInCache = (year: number): number[] => {
 };
 
 export const refreshYearsCache = async (userId: string): Promise<number[]> => {
-  const years = await getAvailableExpenseYears(userId);
-  setCachedYears(years);
+  const [expenseYears, incomeYears] = await Promise.all([
+    getAvailableExpenseYears(userId),
+    getAvailableIncomeYears(userId),
+  ]);
+  const years = uniqueSortedYears([...expenseYears, ...incomeYears, getCurrentYear()]);
+  setCachedYears(years, userId);
   return years;
 };

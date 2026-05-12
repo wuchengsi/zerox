@@ -1,5 +1,5 @@
 import {ActivityIndicator, ScrollView, TextInput, TouchableOpacity, View} from 'react-native';
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import AppHeader from '../../components/atoms/AppHeader';
 import Icon from '../../components/atoms/Icons';
@@ -32,6 +32,7 @@ import {goBack, navigate} from '../../utils/navigationUtils';
 import {gs} from '../../styles/globalStyles';
 
 const MONTHS = getMonthNames();
+const INPUT_SAVE_DEBOUNCE_MS = 400;
 
 const AiQuickExpenseScreen = () => {
   const colors = useThemeColors();
@@ -44,6 +45,8 @@ const AiQuickExpenseScreen = () => {
   const [input, setInput] = useState(getAiAutoExpenseInput());
   const [tasks, setTasks] = useState<AiAutoExpenseTask[]>(getAiAutoExpenseTasks());
   const [processingDotCount, setProcessingDotCount] = useState(1);
+  const inputSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestInputRef = useRef(input);
 
   useEffect(() => {
     dispatch(fetchCategories());
@@ -51,6 +54,20 @@ const AiQuickExpenseScreen = () => {
 
   useEffect(() => subscribeAiAutoExpenseTasks(setTasks), []);
   useEffect(() => subscribeAiAutoExpenseInput(setInput), []);
+
+  useEffect(() => {
+    latestInputRef.current = input;
+  }, [input]);
+
+  useEffect(
+    () => () => {
+      if (inputSaveTimerRef.current) {
+        clearTimeout(inputSaveTimerRef.current);
+      }
+      saveAiAutoExpenseInput(latestInputRef.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!tasks.some(task => task.status === 'running')) {
@@ -114,7 +131,14 @@ const AiQuickExpenseScreen = () => {
 
   const handleInputChange = useCallback((value: string) => {
     setInput(value);
-    saveAiAutoExpenseInput(value);
+    latestInputRef.current = value;
+    if (inputSaveTimerRef.current) {
+      clearTimeout(inputSaveTimerRef.current);
+    }
+    inputSaveTimerRef.current = setTimeout(() => {
+      inputSaveTimerRef.current = null;
+      saveAiAutoExpenseInput(latestInputRef.current);
+    }, INPUT_SAVE_DEBOUNCE_MS);
   }, []);
 
   const handleAutoCreate = useCallback(async () => {
@@ -157,6 +181,11 @@ const AiQuickExpenseScreen = () => {
       referenceDateTime,
     );
     createQueuedAiAutoExpenseTask(trimmedInput, promptText, referenceDateTime);
+    if (inputSaveTimerRef.current) {
+      clearTimeout(inputSaveTimerRef.current);
+      inputSaveTimerRef.current = null;
+    }
+    latestInputRef.current = '';
     clearAiAutoExpenseInput();
     void processAiAutoExpenseQueue({
       userId,

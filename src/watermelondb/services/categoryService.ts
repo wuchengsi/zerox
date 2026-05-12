@@ -294,24 +294,49 @@ export const ensureDefaultCategoriesForUser = async (
     .get<Category>('categories')
     .query(Q.where('user_id', userId))
     .fetch();
+  const categoryCollection = database.get<Category>('categories');
   const byKey = new Map(
-    existing.map(c => [`${normalizeKind(c.kind)}:${c.parentId ?? ''}:${c.name}`, c]),
+    existing.map(c => [
+      `${normalizeKind(c.kind)}:${c.parentId ?? ''}:${c.name}`,
+      {id: c.id, color: c.color},
+    ]),
   );
+  const preparedCategories: Category[] = [];
+
+  const prepareCategory = (
+    name: string,
+    icon: string | null,
+    color: string | null,
+    kind: CategoryKind,
+    parentId: string | null,
+  ) => {
+    const id = nanoid(24);
+    const prepared = categoryCollection.prepareCreate(cat => {
+      cat._raw.id = id;
+      cat.name = name;
+      cat.categoryStatus = true;
+      cat.userId = userId;
+      cat.icon = sanitizeString(icon, DEFAULTS.icon);
+      cat.color = sanitizeString(color, DEFAULTS.color);
+      cat.kind = kind;
+      cat.parentId = parentId ?? undefined;
+    });
+    preparedCategories.push(prepared);
+    return {id, color: sanitizeString(color, DEFAULTS.color)};
+  };
 
   for (const group of DEFAULT_EXPENSE_CATEGORIES) {
     let parent = byKey.get(`expense::${group.name}`);
     if (!parent) {
-      const parentId = await createCategory(group.name, userId, group.icon, group.color, 'expense', null);
-      parent = await database.get<Category>('categories').find(parentId);
+      parent = prepareCategory(group.name, group.icon, group.color, 'expense', null);
       byKey.set(`expense::${group.name}`, parent);
     }
 
     for (const child of group.children) {
       const key = `expense:${parent.id}:${child.name}`;
       if (!byKey.has(key)) {
-        const childId = await createCategory(child.name, userId, child.icon, group.color, 'expense', parent.id);
-        const created = await database.get<Category>('categories').find(childId);
-        byKey.set(key, created);
+        const childCategory = prepareCategory(child.name, child.icon, parent.color, 'expense', parent.id);
+        byKey.set(key, childCategory);
       }
     }
   }
@@ -319,9 +344,14 @@ export const ensureDefaultCategoriesForUser = async (
   for (const category of DEFAULT_INCOME_CATEGORIES) {
     const key = `income::${category.name}`;
     if (!byKey.has(key)) {
-      const id = await createCategory(category.name, userId, category.icon, category.color, 'income', null);
-      const created = await database.get<Category>('categories').find(id);
-      byKey.set(key, created);
+      const incomeCategory = prepareCategory(category.name, category.icon, category.color, 'income', null);
+      byKey.set(key, incomeCategory);
     }
+  }
+
+  if (preparedCategories.length > 0) {
+    await database.write(async () => {
+      await database.batch(...preparedCategories);
+    });
   }
 };
