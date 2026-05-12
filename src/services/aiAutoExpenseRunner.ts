@@ -1,5 +1,5 @@
 import type {CategoryData} from '../watermelondb/services';
-import {createExpense} from '../watermelondb/services';
+import {createExpense, createIncome} from '../watermelondb/services';
 import {ensureYearInCache} from '../utils/availableYearsCache';
 import {formatDate, getISODateTime} from '../utils/dateUtils';
 import {getAiSettings, getMissingAiSettingsFields} from './aiSettingsService';
@@ -16,6 +16,7 @@ import {
   updateAiAutoExpenseTask,
 } from './aiAutoExpenseTaskService';
 import type {
+  AiCreatedRecord,
   AiAutoExpenseTask,
   AiAutoExpenseTaskResultItem,
   AiAutoExpenseTaskStatus,
@@ -31,6 +32,7 @@ export interface AiAutoExpenseRunResult {
   createdCount: number;
   skippedCount: number;
   expenseIds: string[];
+  records: AiCreatedRecord[];
 }
 
 let isProcessingQueue = false;
@@ -40,9 +42,14 @@ export const isAiAutoExpenseQueueProcessing = (): boolean => isProcessingQueue;
 const buildPromptForTask = (input: string, categories: CategoryData[], currentDateTime: string): string =>
   buildAiExpensePrompt(
     input,
-    categories
-      .filter(category => category.categoryStatus)
-      .map(category => category.parent?.name ? `${category.parent.name}·${category.name}` : category.name),
+    {
+      expenseCategoryNames: categories
+        .filter(category => category.categoryStatus && category.kind === 'expense' && !!category.parentId)
+        .map(category => category.parent?.name ? `${category.parent.name}·${category.name}` : category.name),
+      incomeCategoryNames: categories
+        .filter(category => category.categoryStatus && category.kind === 'income' && !category.parentId)
+        .map(category => category.name),
+    },
     currentDateTime,
   );
 
@@ -60,6 +67,7 @@ const getItemIssues = (item: AiExpenseCandidate): string[] =>
 
 const toSkippedResultItem = (item: AiExpenseCandidate, issues: string[] = getItemIssues(item)): AiAutoExpenseTaskResultItem => ({
   localId: item.localId,
+  type: item.type,
   title: item.title,
   amount: item.amount,
   categoryName: item.categoryName || item.categoryHint,
@@ -104,28 +112,31 @@ const runSingleTask = async ({
     });
     const {validItems, invalidItems} = splitAiExpenseItems(parsed.items);
     const expenseIds: string[] = [];
+    const records: AiCreatedRecord[] = [];
     let skippedCount = invalidItems.length;
     const resultItems: AiAutoExpenseTaskResultItem[] = invalidItems.map(item => toSkippedResultItem(item));
 
     for (const item of validItems) {
       try {
-        const expenseId = await createExpense(
-          userId,
-          item.title,
-          item.amount ?? 0,
-          item.categoryId ?? '',
-          item.date,
-        );
-        expenseIds.push(expenseId);
+        const recordId = item.type === 'income'
+          ? await createIncome(userId, item.title, item.amount ?? 0, item.categoryId ?? '', item.date)
+          : await createExpense(userId, item.title, item.amount ?? 0, item.categoryId ?? '', item.date);
+        const record: AiCreatedRecord = {type: item.type, id: recordId};
+        records.push(record);
+        if (item.type === 'expense') {
+          expenseIds.push(recordId);
+        }
         resultItems.push({
           localId: item.localId,
+          type: item.type,
           title: item.title,
           amount: item.amount,
           categoryName: item.categoryName || item.categoryHint,
           categoryId: item.categoryId,
           date: item.date,
           status: 'created',
-          expenseId,
+          expenseId: item.type === 'expense' ? recordId : undefined,
+          recordId,
           issues: getItemIssues(item),
         });
 
@@ -139,39 +150,43 @@ const runSingleTask = async ({
       }
     }
 
-    if (expenseIds.length > 0) {
+    if (records.length > 0) {
       saveAiLastAutoCreateBatch({
         taskId: task.taskId,
         input: task.input,
         expenseIds,
+        records,
       });
     }
 
-    const status: AiAutoExpenseTaskStatus = expenseIds.length === 0 && skippedCount > 0
+    const status: AiAutoExpenseTaskStatus = records.length === 0 && skippedCount > 0
       ? 'failed'
       : skippedCount > 0
       ? 'partial_failed'
       : 'created';
     const errorMessage = skippedCount > 0
-      ? expenseIds.length === 0
+      ? records.length === 0
         ? `未添加账单，${skippedCount} 条需要修正`
-        : `已添加 ${expenseIds.length} 条，跳过 ${skippedCount} 条`
+        : `已添加 ${records.length} 条，跳过 ${skippedCount} 条`
       : undefined;
 
     updateAiAutoExpenseTask(task.taskId, {
       status,
       finishedAt: getISODateTime(),
-      createdCount: expenseIds.length,
+      createdCount: records.length,
       skippedCount,
       expenseIds,
+      recordIds: records.map(record => record.id),
+      createdRecords: records,
       resultItems,
       errorMessage,
     });
 
     return {
-      createdCount: expenseIds.length,
+      createdCount: records.length,
       skippedCount,
       expenseIds,
+      records,
     };
   } catch (error) {
     updateAiAutoExpenseTask(task.taskId, {

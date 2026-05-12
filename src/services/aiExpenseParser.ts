@@ -4,6 +4,8 @@ import {formatDate, getISODateTime} from '../utils/dateUtils';
 import type {AiSettings} from './aiSettingsService';
 import {getMissingAiSettingsFields} from './aiSettingsService';
 
+export type AiRecordType = 'expense' | 'income';
+
 export type AiExpenseIssueCode =
   | 'missing_amount'
   | 'invalid_amount'
@@ -19,6 +21,7 @@ export interface AiExpenseIssue {
 
 export interface AiExpenseCandidate {
   localId: string;
+  type: AiRecordType;
   title: string;
   amount: number | null;
   description: string;
@@ -41,6 +44,7 @@ export class AiExpenseParserError extends Error {
 }
 
 const rawExpenseSchema = z.object({
+  type: z.string().optional().nullable(),
   title: z.string().optional().nullable(),
   amount: z.union([z.number(), z.string()]).optional().nullable(),
   categoryName: z.string().optional().nullable(),
@@ -76,6 +80,17 @@ const CATEGORY_ALIASES: Record<string, string[]> = {
   Education: ['教育', '书', '课程', '学费', 'education', 'book', 'course'],
   礼物: ['礼物', '送礼', 'gift'],
   Gifts: ['礼物', '送礼', 'gift'],
+  工资: ['工资', '薪资', '薪水', '发薪', 'salary', 'payroll'],
+  收入: ['收入', '进账', '到账', '收款', 'income'],
+  投资收入: ['投资', '收益', '分红', '股票', '基金', 'interest', 'dividend'],
+  兼职: ['兼职', '副业', '外快', 'part-time', 'freelance'],
+  生活费: ['生活费', '家里给', '父母给', 'allowance'],
+  红包: ['红包', '转红包', 'red packet'],
+  二手闲置: ['二手', '闲置', '卖出', '卖掉', 'resale'],
+  借入: ['借入', '借款', 'borrow'],
+  报销: ['报销', ' reimbursement', 'reimburse'],
+  退税: ['退税', 'tax refund'],
+  理财: ['理财', '利息', '理财收益'],
   其他: ['其他', '其它', '杂项', 'other', 'unknown'],
   Other: ['其他', '其它', '杂项', 'other', 'unknown'],
 };
@@ -96,27 +111,41 @@ export const normalizeChatCompletionsUrl = (apiBaseUrl: string): string => {
 
 export const buildAiExpensePrompt = (
   input: string,
-  categoryNames: string[],
+  categories:
+    | string[]
+    | {
+        expenseCategoryNames: string[];
+        incomeCategoryNames: string[];
+      },
   referenceDateTime: string,
 ): string => {
-  const categories = categoryNames.length > 0 ? categoryNames.join('、') : '其他';
+  const expenseCategoryNames = Array.isArray(categories) ? categories : categories.expenseCategoryNames;
+  const incomeCategoryNames = Array.isArray(categories) ? [] : categories.incomeCategoryNames;
+  const expenseCategories = expenseCategoryNames.length > 0 ? expenseCategoryNames.join('、') : '其他·其他';
+  const incomeCategories = incomeCategoryNames.length > 0 ? incomeCategoryNames.join('、') : '收入';
 
   return [
-    '你是 Zero 记账应用的自然语言支出解析器。',
-    '只解析支出记录，不要解析收入、转账、预算或理财建议。',
+    '你是 Zero 记账应用的自然语言账单解析器。',
+    '只解析支出和收入记录，不要解析转账、预算或理财建议。',
     '用户可能输入一句话、多行文本、带日期上下文的文本，或一句流水式文本。',
     `用户提交时间：${referenceDateTime}`,
-    `可用分类名称：${categories}`,
+    `可用支出分类名称：${expenseCategories}`,
+    `可用收入分类名称：${incomeCategories}`,
     '请只返回 JSON，不要返回 Markdown，不要解释。',
-    'JSON 格式必须是：{"items":[{"title":"消费标题","amount":数字或null,"categoryName":"可用分类名称或空字符串","categoryHint":"分类线索","date":"YYYY-MM-DDTHH:mm:ss","description":"备注"}]}',
+    'JSON 格式必须是：{"items":[{"type":"expense或income","title":"标题","amount":数字或null,"categoryName":"可用分类名称或空字符串","categoryHint":"分类线索","date":"YYYY-MM-DDTHH:mm:ss"}]}',
     '规则：',
     '1. 单条输入也按 items 数组返回。',
     '2. 一行一条、多行多条、昨天/今天/周一等上下文都要拆成独立条目。',
     '3. 今天、昨天、昨晚、周一等相对日期都以用户提交时间为基准。',
     '4. 没有日期时用用户提交当天；没有具体时间时用用户提交时间。',
     '5. 金额无法判断时 amount 必须为 null。',
-    '6. 分类只能从可用分类名称中选择；不确定时 categoryName 为空，categoryHint 写判断依据。',
-    '7. 支付方式、地点、用途等可放入 description。',
+    '6. type 只能是 expense 或 income。',
+    '7. 消费、付款、买东西、吃饭、交通、购物等为 expense。',
+    '8. 工资、报销、退款、红包收入、兼职、投资收益、生活费、二手闲置收入等为 income。',
+    '9. categoryName 只能从对应 type 的可用分类名称中选择；不要创造不存在的分类名称。',
+    '10. 支出分类应优先选择最精细的“大类·小类”，不要只选大类。',
+    '11. 收入分类只从可用收入分类中选择。',
+    '12. 不确定分类时 categoryName 为空，categoryHint 写判断依据。',
     `用户输入：${input}`,
   ].join('\n');
 };
@@ -182,9 +211,34 @@ const normalizeDate = (dateValue: string | null | undefined, fallbackDateTime: s
   return {date: formatDate(parsed, 'YYYY-MM-DDTHH:mm:ss'), valid: true};
 };
 
-const findDefaultCategory = (categories: CategoryData[]): CategoryData | null => {
-  const activeCategories = categories.filter(category => category.categoryStatus);
+const normalizeRecordType = (type: string | null | undefined): AiRecordType => {
+  const normalized = normalizeText(type ?? '');
+  return normalized === 'income' || normalized === '收入' ? 'income' : 'expense';
+};
+
+const getTypeCategories = (categories: CategoryData[], type: AiRecordType): CategoryData[] =>
+  categories.filter(category => {
+    if (!category.categoryStatus || category.kind !== type) {
+      return false;
+    }
+    if (type === 'income') {
+      return !category.parentId;
+    }
+    return !!category.parentId;
+  });
+
+const findDefaultCategory = (categories: CategoryData[], type: AiRecordType): CategoryData | null => {
+  const activeCategories = getTypeCategories(categories, type);
+  if (type === 'income') {
+    return (
+      activeCategories.find(category => normalizeText(category.name) === normalizeText('收入')) ??
+      activeCategories[0] ??
+      null
+    );
+  }
+
   return (
+    activeCategories.find(category => normalizeText(getCategoryDisplayName(category)) === normalizeText('其他·其他')) ??
     activeCategories.find(category => normalizeText(category.name) === normalizeText('其他')) ??
     activeCategories.find(category => normalizeText(category.name) === normalizeText('Other')) ??
     activeCategories[0] ??
@@ -193,11 +247,12 @@ const findDefaultCategory = (categories: CategoryData[]): CategoryData | null =>
 };
 
 export const matchCategory = (
+  type: AiRecordType,
   categoryName: string,
   categoryHint: string,
   categories: CategoryData[],
 ): {category: CategoryData | null; usedFallback: boolean} => {
-  const activeCategories = categories.filter(category => category.categoryStatus);
+  const activeCategories = getTypeCategories(categories, type);
   const joinedHint = normalizeText(`${categoryName} ${categoryHint}`);
 
   const exact = activeCategories.find(category => {
@@ -231,7 +286,7 @@ export const matchCategory = (
     }
   }
 
-  return {category: findDefaultCategory(activeCategories), usedFallback: true};
+  return {category: findDefaultCategory(categories, type), usedFallback: true};
 };
 
 export const normalizeAiExpenseItems = (
@@ -240,12 +295,13 @@ export const normalizeAiExpenseItems = (
   fallbackDateTime: string = getISODateTime(),
 ): AiExpenseCandidate[] =>
   rawItems.map((item, index) => {
+    const type = normalizeRecordType(item.type);
     const title = (item.title ?? '').trim();
     const description = (item.description ?? item.note ?? '').trim();
     const amount = parseAmount(item.amount);
     const categoryName = (item.categoryName ?? '').trim();
     const categoryHint = (item.categoryHint ?? categoryName ?? '').trim();
-    const matchedCategory = matchCategory(categoryName, categoryHint || title, categories);
+    const matchedCategory = matchCategory(type, categoryName, categoryHint || title, categories);
     const normalizedDate = normalizeDate(item.date, fallbackDateTime);
     const issues: AiExpenseIssue[] = [];
 
@@ -271,6 +327,7 @@ export const normalizeAiExpenseItems = (
 
     return {
       localId: `ai-expense-${Date.now()}-${index}`,
+      type,
       title,
       amount,
       description,
@@ -329,13 +386,16 @@ export const parseNaturalLanguageExpenses = async ({
 
   const trimmedInput = input.trim();
   if (!trimmedInput) {
-    throw new AiExpenseParserError('请输入要解析的消费记录');
+    throw new AiExpenseParserError('请输入要解析的账单记录');
   }
 
   const url = normalizeChatCompletionsUrl(settings.apiBaseUrl);
   const prompt = buildAiExpensePrompt(
     trimmedInput,
-    categories.filter(category => category.categoryStatus).map(getCategoryDisplayName),
+    {
+      expenseCategoryNames: getTypeCategories(categories, 'expense').map(getCategoryDisplayName),
+      incomeCategoryNames: getTypeCategories(categories, 'income').map(getCategoryDisplayName),
+    },
     currentDateTime,
   );
 
@@ -380,7 +440,7 @@ export const parseNaturalLanguageExpenses = async ({
 
   const rawItems = Array.isArray(parsed.data) ? parsed.data : parsed.data.items;
   if (rawItems.length === 0) {
-    throw new AiExpenseParserError('没有识别到账单，请补充金额或消费内容');
+    throw new AiExpenseParserError('没有识别到账单，请补充金额或内容');
   }
 
   return {

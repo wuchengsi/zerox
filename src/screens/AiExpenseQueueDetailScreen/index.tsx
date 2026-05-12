@@ -9,8 +9,9 @@ import PrimaryText from '../../components/atoms/PrimaryText';
 import PrimaryView from '../../components/atoms/PrimaryView';
 import useThemeColors from '../../hooks/useThemeColors';
 import {useDialog} from '../../context/DialogContext';
-import {fetchCategories, selectActiveCategories} from '../../redux/slice/categoryDataSlice';
+import {fetchCategories, selectCategoryData} from '../../redux/slice/categoryDataSlice';
 import {fetchExpensesByMonth, invalidateExpenseCache} from '../../redux/slice/expenseDataSlice';
+import {fetchIncomesByMonth, invalidateIncomeCache} from '../../redux/slice/incomeDataSlice';
 import {selectMonthIndex, selectYear} from '../../redux/slice/monthSelectionSlice';
 import {selectUserId} from '../../redux/slice/userIdSlice';
 import {AppDispatch} from '../../redux/store';
@@ -64,7 +65,7 @@ const AiExpenseQueueDetailScreen = () => {
   const dispatch = useDispatch<AppDispatch>();
   const route = useRoute<AiExpenseQueueDetailRouteProp>();
   const userId = useSelector(selectUserId);
-  const categories = useSelector(selectActiveCategories);
+  const categories = useSelector(selectCategoryData);
   const selectedYear = useSelector(selectYear);
   const selectedMonthIndex = useSelector(selectMonthIndex);
   const [task, setTask] = useState<AiAutoExpenseTask | null>(() => getAiAutoExpenseTaskById(route.params.taskId));
@@ -93,7 +94,11 @@ const AiExpenseQueueDetailScreen = () => {
 
   const refreshCurrentMonth = async () => {
     dispatch(invalidateExpenseCache());
-    await dispatch(fetchExpensesByMonth(currentYearMonth));
+    dispatch(invalidateIncomeCache());
+    await Promise.all([
+      dispatch(fetchExpensesByMonth(currentYearMonth)),
+      dispatch(fetchIncomesByMonth(currentYearMonth)),
+    ]);
   };
 
   const handleRetry = async () => {
@@ -121,15 +126,18 @@ const AiExpenseQueueDetailScreen = () => {
 
     const loadedCategories = categories.length > 0
       ? categories
-      : (await dispatch(fetchCategories()).unwrap()).filter(
-          category => category.categoryStatus && category.kind === 'expense' && !!category.parentId,
-        );
+      : await dispatch(fetchCategories()).unwrap();
     const referenceDateTime = getISODateTime();
     const promptText = buildAiExpensePrompt(
       trimmedInput,
-      loadedCategories
-        .filter(category => category.categoryStatus)
-        .map(category => category.parent?.name ? `${category.parent.name}·${category.name}` : category.name),
+      {
+        expenseCategoryNames: loadedCategories
+          .filter(category => category.categoryStatus && category.kind === 'expense' && !!category.parentId)
+          .map(category => category.parent?.name ? `${category.parent.name}·${category.name}` : category.name),
+        incomeCategoryNames: loadedCategories
+          .filter(category => category.categoryStatus && category.kind === 'income' && !category.parentId)
+          .map(category => category.name),
+      },
       referenceDateTime,
     );
     createQueuedAiAutoExpenseTask(trimmedInput, promptText, referenceDateTime);
@@ -245,7 +253,7 @@ const AiExpenseQueueDetailScreen = () => {
                     </PrimaryText>
                   </View>
                   <PrimaryText size={11} color={colors.secondaryText} style={gs.mt4}>
-                    金额：{item.amount ?? '未识别'} · 分类：{item.categoryName || '未识别'}
+                    类型：{item.type === 'income' ? '收入' : '支出'} · 金额：{item.amount ?? '未识别'} · 分类：{item.categoryName || '未识别'}
                   </PrimaryText>
                   {!isCreated && item.issues.length > 0 ? (
                     <PrimaryText size={11} color={colors.accentRed} style={[gs.mt4, {lineHeight: 16}]}>

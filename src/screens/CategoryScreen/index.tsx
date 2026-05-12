@@ -191,7 +191,7 @@ const CategoryScreen = () => {
       <PrimaryView colors={colors} useSidePadding={false} useBottomPadding={false}>
         <View style={[gs.mb15, gs.px16]}>
           <HeaderContainer headerText={'分类'} />
-          <View style={[gs.row, gs.gap8, gs.mt12]}>
+          <View style={[gs.row, gs.gap8, gs.mt10]}>
             <Segment active={tab === 'expense'} label="支出" onPress={() => setTab('expense')} colors={colors} />
             <Segment active={tab === 'income'} label="收入" onPress={() => setTab('income')} colors={colors} />
           </View>

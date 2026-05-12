@@ -156,10 +156,10 @@ const IncomeScreen = () => {
             </TouchableOpacity>
 
             {categoryTotals.length > 0 ? (
-              <View style={[gs.rounded12, gs.px14, gs.py12, gs.mb12, {backgroundColor: colors.containerColor}]}>
+              <View style={[gs.rounded12, gs.px14, gs.py12, gs.mb10, {backgroundColor: colors.containerColor}]}>
                 <PrimaryText size={13} weight="semibold" style={gs.mb8}>分类统计</PrimaryText>
                 {categoryTotals.map(item => (
-                  <View key={item.name} style={[gs.rowBetweenCenter, gs.py6]}>
+                  <View key={item.name} style={[gs.rowBetweenCenter, gs.py5]}>
                     <View style={gs.rowCenter}>
                       <Icon name={item.icon || 'wallet'} size={16} color={item.color} />
                       <PrimaryText size={13} style={gs.ml8}>{item.name}</PrimaryText>

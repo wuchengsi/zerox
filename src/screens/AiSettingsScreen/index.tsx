@@ -18,9 +18,10 @@ import {
   subscribeAiLastAutoCreateBatch,
 } from '../../services/aiAutoExpenseTaskService';
 import {fetchExpensesByMonth, invalidateExpenseCache} from '../../redux/slice/expenseDataSlice';
+import {fetchIncomesByMonth, invalidateIncomeCache} from '../../redux/slice/incomeDataSlice';
 import {selectMonthIndex, selectYear} from '../../redux/slice/monthSelectionSlice';
 import {AppDispatch} from '../../redux/store';
-import {deleteExpenseById, getExpenseById} from '../../watermelondb/services';
+import {deleteExpenseById, deleteIncomeById, getExpenseById, getIncomeById} from '../../watermelondb/services';
 import {getMonthNames, getMonthNumber} from '../../utils/dateUtils';
 import {gs} from '../../styles/globalStyles';
 
@@ -80,7 +81,8 @@ const AiSettingsScreen = () => {
 
   const handleUndoLastAutoCreate = useCallback(async () => {
     const batch = getAiLastAutoCreateBatch();
-    if (!batch || batch.expenseIds.length === 0) {
+    const records = batch?.records ?? batch?.expenseIds.map(id => ({type: 'expense' as const, id})) ?? [];
+    if (!batch || records.length === 0) {
       await showAlert({
         type: 'warning',
         message: '没有可撤销的 AI 自动添加记录',
@@ -101,14 +103,20 @@ const AiSettingsScreen = () => {
     }
 
     let removedCount = 0;
-    for (const expenseId of batch.expenseIds) {
-      const expense = await getExpenseById(expenseId);
-      if (!expense) {
+    for (const record of records) {
+      const existing = record.type === 'income'
+        ? await getIncomeById(record.id)
+        : await getExpenseById(record.id);
+      if (!existing) {
         continue;
       }
 
       try {
-        await deleteExpenseById(expenseId);
+        if (record.type === 'income') {
+          await deleteIncomeById(record.id);
+        } else {
+          await deleteExpenseById(record.id);
+        }
         removedCount += 1;
       } catch {
         // Skip records that disappeared between lookup and delete.
@@ -118,7 +126,11 @@ const AiSettingsScreen = () => {
     clearAiLastAutoCreateBatch();
     saveAiAutoExpenseInput(batch.input);
     dispatch(invalidateExpenseCache());
-    await dispatch(fetchExpensesByMonth(currentYearMonth));
+    dispatch(invalidateIncomeCache());
+    await Promise.all([
+      dispatch(fetchExpensesByMonth(currentYearMonth)),
+      dispatch(fetchIncomesByMonth(currentYearMonth)),
+    ]);
     await showAlert({
       type: removedCount > 0 ? 'success' : 'warning',
       message: `已撤销 ${removedCount} 条 AI 自动添加账单`,

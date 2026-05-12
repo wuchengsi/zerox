@@ -8,8 +8,9 @@ import PrimaryText from '../../components/atoms/PrimaryText';
 import PrimaryView from '../../components/atoms/PrimaryView';
 import useThemeColors from '../../hooks/useThemeColors';
 import {useDialog} from '../../context/DialogContext';
-import {fetchCategories, selectActiveCategories} from '../../redux/slice/categoryDataSlice';
+import {fetchCategories, selectCategoryData} from '../../redux/slice/categoryDataSlice';
 import {fetchExpensesByMonth, invalidateExpenseCache} from '../../redux/slice/expenseDataSlice';
+import {fetchIncomesByMonth, invalidateIncomeCache} from '../../redux/slice/incomeDataSlice';
 import {selectMonthIndex, selectYear} from '../../redux/slice/monthSelectionSlice';
 import {selectUserId} from '../../redux/slice/userIdSlice';
 import {AppDispatch} from '../../redux/store';
@@ -37,7 +38,7 @@ const AiQuickExpenseScreen = () => {
   const {showAlert} = useDialog();
   const dispatch = useDispatch<AppDispatch>();
   const userId = useSelector(selectUserId);
-  const categories = useSelector(selectActiveCategories);
+  const categories = useSelector(selectCategoryData);
   const selectedYear = useSelector(selectYear);
   const selectedMonthIndex = useSelector(selectMonthIndex);
   const [input, setInput] = useState(getAiAutoExpenseInput());
@@ -96,7 +97,11 @@ const AiQuickExpenseScreen = () => {
 
   const refreshCurrentMonth = useCallback(async () => {
     dispatch(invalidateExpenseCache());
-    await dispatch(fetchExpensesByMonth(currentYearMonth));
+    dispatch(invalidateIncomeCache());
+    await Promise.all([
+      dispatch(fetchExpensesByMonth(currentYearMonth)),
+      dispatch(fetchIncomesByMonth(currentYearMonth)),
+    ]);
   }, [currentYearMonth, dispatch]);
 
   const handleOpenSettings = useCallback(() => {
@@ -129,7 +134,7 @@ const AiQuickExpenseScreen = () => {
     if (!trimmedInput) {
       await showAlert({
         type: 'warning',
-        message: '请输入要自动记账的消费记录',
+        message: '请输入要自动记账的账单记录',
         okLabel: '知道了',
       });
       return;
@@ -137,15 +142,18 @@ const AiQuickExpenseScreen = () => {
 
     const loadedCategories = categories.length > 0
       ? categories
-      : (await dispatch(fetchCategories()).unwrap()).filter(
-          category => category.categoryStatus && category.kind === 'expense' && !!category.parentId,
-        );
+      : await dispatch(fetchCategories()).unwrap();
     const referenceDateTime = getISODateTime();
     const promptText = buildAiExpensePrompt(
       trimmedInput,
-      loadedCategories
-        .filter(category => category.categoryStatus)
-        .map(category => category.parent?.name ? `${category.parent.name}·${category.name}` : category.name),
+      {
+        expenseCategoryNames: loadedCategories
+          .filter(category => category.categoryStatus && category.kind === 'expense' && !!category.parentId)
+          .map(category => category.parent?.name ? `${category.parent.name}·${category.name}` : category.name),
+        incomeCategoryNames: loadedCategories
+          .filter(category => category.categoryStatus && category.kind === 'income' && !category.parentId)
+          .map(category => category.name),
+      },
       referenceDateTime,
     );
     createQueuedAiAutoExpenseTask(trimmedInput, promptText, referenceDateTime);
@@ -182,12 +190,12 @@ const AiQuickExpenseScreen = () => {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={gs.pb80}>
         <PrimaryText size={12} color={colors.secondaryText} style={gs.mb5}>
-          消费内容
+          账单内容
         </PrimaryText>
         <TextInput
           value={input}
           onChangeText={handleInputChange}
-          placeholder={'例如：\n昨天：\n午饭 28\n瑞幸 16\n地铁 4'}
+          placeholder={'例如：\n昨天：\n午饭 28\n瑞幸 16\n地铁 4\n今天工资 8000'}
           placeholderTextColor={colors.secondaryText}
           multiline
           scrollEnabled

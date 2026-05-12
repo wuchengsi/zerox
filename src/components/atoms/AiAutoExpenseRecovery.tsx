@@ -1,7 +1,8 @@
 import {useEffect, useRef} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
-import {fetchCategories, selectActiveCategories} from '../../redux/slice/categoryDataSlice';
+import {fetchCategories, selectCategoryData} from '../../redux/slice/categoryDataSlice';
 import {fetchExpensesByMonth, invalidateExpenseCache} from '../../redux/slice/expenseDataSlice';
+import {fetchIncomesByMonth, invalidateIncomeCache} from '../../redux/slice/incomeDataSlice';
 import {selectIsOnboarded} from '../../redux/slice/isOnboardedSlice';
 import {selectMonthIndex, selectYear} from '../../redux/slice/monthSelectionSlice';
 import {fetchUserData, selectUserId} from '../../redux/slice/userIdSlice';
@@ -16,7 +17,7 @@ const AiAutoExpenseRecovery = () => {
   const dispatch = useDispatch<AppDispatch>();
   const isOnboarded = useSelector(selectIsOnboarded);
   const userId = useSelector(selectUserId);
-  const categories = useSelector(selectActiveCategories);
+  const categories = useSelector(selectCategoryData);
   const selectedYear = useSelector(selectYear);
   const selectedMonthIndex = useSelector(selectMonthIndex);
   const isRecoveringRef = useRef(false);
@@ -47,9 +48,7 @@ const AiAutoExpenseRecovery = () => {
 
         const loadedCategories = categories.length > 0
           ? categories
-          : (await dispatch(fetchCategories()).unwrap()).filter(
-              category => category.categoryStatus && category.kind === 'expense' && !!category.parentId,
-            );
+          : await dispatch(fetchCategories()).unwrap();
         if (!loadedCategories.some(category => category.categoryStatus)) {
           return;
         }
@@ -60,7 +59,11 @@ const AiAutoExpenseRecovery = () => {
           categories: loadedCategories,
           onTaskFinished: async () => {
             dispatch(invalidateExpenseCache());
-            await dispatch(fetchExpensesByMonth(currentYearMonth));
+            dispatch(invalidateIncomeCache());
+            await Promise.all([
+              dispatch(fetchExpensesByMonth(currentYearMonth)),
+              dispatch(fetchIncomesByMonth(currentYearMonth)),
+            ]);
           },
         });
       } catch {

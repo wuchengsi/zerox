@@ -22,11 +22,19 @@ export interface AiAutoExpenseTask {
   skippedCount?: number;
   createdCount?: number;
   expenseIds?: string[];
+  recordIds?: string[];
+  createdRecords?: AiCreatedRecord[];
   resultItems?: AiAutoExpenseTaskResultItem[];
+}
+
+export interface AiCreatedRecord {
+  type: 'expense' | 'income';
+  id: string;
 }
 
 export interface AiAutoExpenseTaskResultItem {
   localId: string;
+  type?: 'expense' | 'income';
   title: string;
   amount: number | null;
   categoryName: string;
@@ -34,6 +42,7 @@ export interface AiAutoExpenseTaskResultItem {
   date: string;
   status: 'created' | 'skipped';
   expenseId?: string;
+  recordId?: string;
   issues: string[];
 }
 
@@ -44,6 +53,7 @@ export interface AiLastAutoCreateBatch {
   input: string;
   createdAt: string;
   expenseIds: string[];
+  records?: AiCreatedRecord[];
   createdCount: number;
 }
 
@@ -233,10 +243,12 @@ export const saveAiLastAutoCreateBatch = ({
   taskId,
   input,
   expenseIds,
+  records,
 }: {
   taskId: string;
   input: string;
   expenseIds: string[];
+  records?: AiCreatedRecord[];
 }): AiLastAutoCreateBatch => {
   const batch: AiLastAutoCreateBatch = {
     version: 1,
@@ -245,7 +257,8 @@ export const saveAiLastAutoCreateBatch = ({
     input,
     createdAt: now(),
     expenseIds,
-    createdCount: expenseIds.length,
+    records,
+    createdCount: records?.length ?? expenseIds.length,
   };
   StorageService.setItemSync(AI_LAST_AUTO_CREATE_BATCH_KEY, JSON.stringify(batch));
   emitBatch();
