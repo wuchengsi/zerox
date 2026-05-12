@@ -45,6 +45,7 @@ const CategoryEntry: React.FC<CategoryEntryProps> = ({type, route}) => {
   const [selectedColor, setSelectedColor] = useState<string | null>(
     isAddButton ? '#808080' : resolveIconParam(categoryData?.categoryColor),
   );
+  const canEditColor = !isChildCategory;
 
   const userId = useSelector(selectUserId);
   const isValid = categorySchema.safeParse(categoryName).success;
@@ -186,33 +187,54 @@ const CategoryEntry: React.FC<CategoryEntryProps> = ({type, route}) => {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={handleOpenColorPicker}
-            activeOpacity={0.7}
-            style={[
-              gs.py10,
-              gs.px14,
-              gs.rounded12,
-              gs.rowCenter,
-              gs.gap8,
-              gs.flex1,
-              {backgroundColor: colors.secondaryAccent},
-            ]}>
+          {canEditColor ? (
+            <TouchableOpacity
+              onPress={handleOpenColorPicker}
+              activeOpacity={0.7}
+              style={[
+                gs.py10,
+                gs.px14,
+                gs.rounded12,
+                gs.rowCenter,
+                gs.gap8,
+                gs.flex1,
+                {backgroundColor: colors.secondaryAccent},
+              ]}>
+              <View
+                style={[
+                  gs.size32,
+                  gs.roundedFull,
+                  gs.center,
+                  {backgroundColor: selectedColor ?? colors.accentGreen},
+                ]}
+              />
+              <View style={gs.flex1}>
+                <PrimaryText size={11} color={colors.secondaryText}>颜色</PrimaryText>
+                <PrimaryText size={13} weight="medium">
+                  {selectedColor ? '更换' : '选择'}
+                </PrimaryText>
+              </View>
+            </TouchableOpacity>
+          ) : (
             <View
               style={[
-                gs.size32,
-                gs.roundedFull,
-                gs.center,
-                {backgroundColor: selectedColor ?? colors.accentGreen},
-              ]}
-            />
-            <View style={gs.flex1}>
-              <PrimaryText size={11} color={colors.secondaryText}>颜色</PrimaryText>
-              <PrimaryText size={13} weight="medium">
-                {selectedColor ? '更换' : '选择'}
-              </PrimaryText>
+                gs.py10,
+                gs.px14,
+                gs.rounded12,
+                gs.rowCenter,
+                gs.gap8,
+                gs.flex1,
+                {backgroundColor: colors.secondaryAccent},
+              ]}>
+              <View style={[gs.size32, gs.roundedFull, {backgroundColor: colors.iconContainer}]} />
+              <View style={gs.flex1}>
+                <PrimaryText size={11} color={colors.secondaryText}>颜色</PrimaryText>
+                <PrimaryText size={13} weight="medium">
+                  跟随大类
+                </PrimaryText>
+              </View>
             </View>
-          </TouchableOpacity>
+          )}
         </View>
       </View>
 

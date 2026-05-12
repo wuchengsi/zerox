@@ -43,6 +43,7 @@ const useCategory = () => {
     categoryColor: string,
     categoryKind: 'expense' | 'income' = 'expense',
     parentId = '',
+    parentName = '',
   ) => {
     navigate('UpdateCategoryScreen', {
       categoryId,
@@ -51,6 +52,7 @@ const useCategory = () => {
       categoryColor,
       categoryKind,
       parentId,
+      parentName,
     });
   }, []);
 

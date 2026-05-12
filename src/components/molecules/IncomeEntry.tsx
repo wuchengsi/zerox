@@ -1,5 +1,5 @@
 import React, {memo, useCallback, useEffect, useState} from 'react';
-import {TextInput, View} from 'react-native';
+import {TextInput, TouchableOpacity, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import AppHeader from '../atoms/AppHeader';
 import CategoryContainer from './CategoryContainer';
@@ -18,7 +18,7 @@ import {createIncome, updateIncomeById} from '../../watermelondb/services';
 import type {CategoryData} from '../../watermelondb/services';
 import {formatDate, getISODateTime} from '../../utils/dateUtils';
 import {ensureYearInCache} from '../../utils/availableYearsCache';
-import {goBack} from '../../utils/navigationUtils';
+import {goBack, replace} from '../../utils/navigationUtils';
 import {expenseAmountSchema, expenseSchema} from '../../utils/validationSchema';
 import {gs} from '../../styles/globalStyles';
 
@@ -106,6 +106,23 @@ const IncomeEntry: React.FC<IncomeEntryProps> = ({type, route}) => {
       <View>
         <View style={[gs.mb20, gs.mt20]}>
           <AppHeader onPress={goBack} colors={colors} text={isAdd ? '新增收入' : '编辑收入'} />
+          {isAdd ? (
+            <View style={[gs.row, gs.gap8, gs.mt15]}>
+              <TouchableOpacity
+                onPress={() => replace('AddTransactionsScreen')}
+                activeOpacity={0.7}
+                style={[gs.py8, gs.px14, gs.rounded12, {backgroundColor: colors.secondaryAccent}]}>
+                <PrimaryText size={13} color={colors.primaryText}>
+                  支出
+                </PrimaryText>
+              </TouchableOpacity>
+              <View style={[gs.py8, gs.px14, gs.rounded12, {backgroundColor: colors.primaryText}]}>
+                <PrimaryText size={13} weight="semibold" color={colors.buttonText}>
+                  收入
+                </PrimaryText>
+              </View>
+            </View>
+          ) : null}
         </View>
 
         <CustomInput

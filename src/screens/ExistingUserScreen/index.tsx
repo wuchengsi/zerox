@@ -133,6 +133,7 @@ const ExistingUserScreen = () => {
               <SyncStatusItem label="用户" status={syncStatus.user} colors={colors} />
               <SyncStatusItem label="分类" status={syncStatus.categories} count={syncStats.categories} colors={colors} />
               <SyncStatusItem label="账单" status={syncStatus.expenses} count={syncStats.expenses} colors={colors} />
+              <SyncStatusItem label="收入" status={syncStatus.incomes} count={syncStats.incomes} colors={colors} />
               <SyncStatusItem label="债务对象" status={syncStatus.debtors} count={syncStats.debtors} colors={colors} />
               <SyncStatusItem label="债务" status={syncStatus.debts} count={syncStats.debts} colors={colors} />
               <SyncStatusItem label="货币" status={syncStatus.currencies} colors={colors} />

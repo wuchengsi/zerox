@@ -111,6 +111,7 @@ const CategoryScreen = () => {
         category.color ?? colors.primaryText,
         category.kind,
         category.parentId,
+        category.parent?.name,
       );
     },
     [colors.primaryText, handleEdit],

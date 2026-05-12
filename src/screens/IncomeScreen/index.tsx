@@ -138,7 +138,7 @@ const IncomeScreen = () => {
             <TouchableOpacity
               onPress={openMonthPicker}
               activeOpacity={0.7}
-              style={[gs.px14, gs.py12, gs.rounded12, gs.mb12, {backgroundColor: colors.accentGreen}]}>
+              style={[gs.px14, gs.py12, gs.rounded12, gs.mb20, {backgroundColor: colors.accentGreen}]}>
               <View style={gs.rowBetweenCenter}>
                 <View style={[gs.rowCenter, gs.gap6]}>
                   <PrimaryText size={14} weight="semibold" color={colors.buttonText}>

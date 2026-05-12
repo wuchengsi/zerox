@@ -1,4 +1,4 @@
-import {NavigationContainerRef, CommonActions} from '@react-navigation/native';
+import {NavigationContainerRef, CommonActions, StackActions} from '@react-navigation/native';
 
 let navigationRef: NavigationContainerRef<any> | null = null;
 
@@ -9,6 +9,16 @@ export const setNavigationRef = (ref: NavigationContainerRef<any>) => {
 export const navigate = (name: string, params?: object) => {
   if (navigationRef) {
     navigationRef.dispatch(CommonActions.navigate({name, params}));
+  } else if (__DEV__) {
+    console.error(
+      'Navigation reference is not set. Make sure to call setNavigationRef.',
+    );
+  }
+};
+
+export const replace = (name: string, params?: object) => {
+  if (navigationRef) {
+    navigationRef.dispatch(StackActions.replace(name, params));
   } else if (__DEV__) {
     console.error(
       'Navigation reference is not set. Make sure to call setNavigationRef.',

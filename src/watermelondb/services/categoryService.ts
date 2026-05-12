@@ -68,6 +68,11 @@ export const createCategory = async (
   parentId: string | null = null,
 ): Promise<string> => {
   const id = nanoid(24);
+  let resolvedColor = color;
+  if (parentId) {
+    const parent = await database.get<Category>('categories').find(parentId);
+    resolvedColor = parent.color;
+  }
   await database.write(async () => {
     await database.get<Category>('categories').create(cat => {
       cat._raw.id = id;
@@ -76,7 +81,7 @@ export const createCategory = async (
       cat.userId = userId;
       // Always assign string values for consistent Hidden Class shape
       cat.icon = sanitizeString(icon, DEFAULTS.icon);
-      cat.color = sanitizeString(color, DEFAULTS.color);
+      cat.color = sanitizeString(resolvedColor, DEFAULTS.color);
       cat.kind = kind;
       cat.parentId = parentId ?? undefined;
     });
@@ -111,6 +116,10 @@ export const updateCategoryById = async (
 ): Promise<void> => {
   await database.write(async () => {
     const category = await database.get<Category>('categories').find(categoryId);
+    const resolvedParentId = newParentId !== undefined ? newParentId : category.parentId ?? null;
+    const parentColor = resolvedParentId
+      ? (await database.get<Category>('categories').find(resolvedParentId)).color
+      : null;
     await category.update(cat => {
       if (newName !== undefined) {
         cat.name = newName;
@@ -118,7 +127,9 @@ export const updateCategoryById = async (
       if (newIcon !== undefined) {
         cat.icon = newIcon;
       }
-      if (newColor !== undefined) {
+      if (parentColor) {
+        cat.color = parentColor;
+      } else if (newColor !== undefined) {
         cat.color = newColor;
       }
       if (newKind !== undefined) {
@@ -128,6 +139,20 @@ export const updateCategoryById = async (
         cat.parentId = newParentId ?? undefined;
       }
     });
+
+    if (!resolvedParentId && newColor !== undefined) {
+      const children = await database
+        .get<Category>('categories')
+        .query(Q.where('parent_id', categoryId))
+        .fetch();
+      await database.batch(
+        ...children.map(child =>
+          child.prepareUpdate(c => {
+            c.color = newColor;
+          }),
+        ),
+      );
+    }
   });
 };
 

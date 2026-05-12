@@ -39,6 +39,7 @@ interface SyncStatus {
   debtors: 'pending' | 'syncing' | 'done' | 'error';
   currencies: 'pending' | 'syncing' | 'done' | 'error';
   expenses: 'pending' | 'syncing' | 'done' | 'error';
+  incomes: 'pending' | 'syncing' | 'done' | 'error';
   debts: 'pending' | 'syncing' | 'done' | 'error';
 }
 
@@ -58,11 +59,13 @@ const useExistingUser = () => {
     debtors: 'pending',
     currencies: 'pending',
     expenses: 'pending',
+    incomes: 'pending',
     debts: 'pending',
   });
   const [syncStats, setSyncStats] = useState({
     categories: 0,
     expenses: 0,
+    incomes: 0,
     debtors: 0,
     debts: 0,
   });
@@ -222,18 +225,24 @@ const useExistingUser = () => {
       throw error;
     }
 
+    setSyncStatus(prev => ({...prev, incomes: 'syncing'}));
     try {
+      let incomeCount = 0;
       for (const incomeData of data.incomes ?? []) {
         const {title, amount, category, date} = incomeData;
         const categoryId = categoryIdMap.get(category.name) ?? categoryIdMap.get('收入');
         if (categoryId) {
           await createIncome(userId, title, amount, categoryId, date);
+          incomeCount++;
         }
       }
+      setSyncStats(prev => ({...prev, incomes: incomeCount}));
+      setSyncStatus(prev => ({...prev, incomes: 'done'}));
     } catch (error) {
       if (__DEV__) {
         console.error('Error syncing incomes:', error);
       }
+      setSyncStatus(prev => ({...prev, incomes: 'error'}));
       throw error;
     }
 
@@ -271,6 +280,7 @@ const useExistingUser = () => {
         debtors: 'pending',
         currencies: 'pending',
         expenses: 'pending',
+        incomes: 'pending',
         debts: 'pending',
       });
 
@@ -351,7 +361,7 @@ const useExistingUser = () => {
     setFileName(null);
     setIsSyncComplete(false);
     setSyncError(null);
-    setSyncStats({categories: 0, expenses: 0, debtors: 0, debts: 0});
+    setSyncStats({categories: 0, expenses: 0, incomes: 0, debtors: 0, debts: 0});
     await importData();
   };
 

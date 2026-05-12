@@ -3,7 +3,7 @@ import React, {useMemo} from 'react';
 import {PieChart} from 'react-native-svg-charts';
 import {useRoute} from '@react-navigation/native';
 import AppHeader from '../../components/atoms/AppHeader';
-import {goBack} from '../../utils/navigationUtils';
+import {goBack, navigate} from '../../utils/navigationUtils';
 import TransactionList from '../../components/molecules/TransactionList';
 import useCategoryTransaction, {CategoryTransactionRouteProp} from './useCategoryTransaction';
 import PrimaryView from '../../components/atoms/PrimaryView';
@@ -12,6 +12,19 @@ import PieChartLabels from '../../components/atoms/PieChartLabels';
 import Icon from '../../components/atoms/Icons';
 import {formatCurrency} from '../../utils/numberUtils';
 import {gs} from '../../styles/globalStyles';
+
+const SUBCATEGORY_CHART_COLORS = [
+  '#1F7A5A',
+  '#D97706',
+  '#2563EB',
+  '#BE123C',
+  '#7C3AED',
+  '#0F766E',
+  '#C2410C',
+  '#4338CA',
+  '#A16207',
+  '#15803D',
+];
 
 const CategoryTransactionScreen = () => {
   const route = useRoute<CategoryTransactionRouteProp>();
@@ -42,14 +55,14 @@ const CategoryTransactionScreen = () => {
           });
         }
       });
-      const subcategoryPieData = Array.from(subcategoryTotals.entries())
-        .sort((a, b) => b[1] - a[1])
-        .map(([name, amount]) => {
+      const sortedSubcategoryTotals = Array.from(subcategoryTotals.entries()).sort((a, b) => b[1] - a[1]);
+      const subcategoryPieData = sortedSubcategoryTotals.map(([name, amount], index) => {
           const meta = subcategoryMeta.get(name);
+          const chartColor = SUBCATEGORY_CHART_COLORS[index % SUBCATEGORY_CHART_COLORS.length];
           return {
             key: name,
             value: amount,
-            svg: {fill: meta?.color ?? categoryColor, onPress: () => {}},
+            svg: {fill: chartColor, onPress: () => {}},
             label: `${name}: ${currencySymbol} ${amount}`,
             categoryId: meta?.id,
             categoryIcon: meta?.icon,
@@ -84,13 +97,23 @@ const CategoryTransactionScreen = () => {
                 slices={subcategoryPieData}
                 colors={colors}
                 currencySymbol={currencySymbol}
+                onCategoryPress={(categoryId, subcategoryName, subcategoryColor, subcategoryIcon) => {
+                  navigate('CategoryTransactionScreen', {
+                    categoryId,
+                    categoryName: subcategoryName,
+                    categoryColor: subcategoryColor,
+                    categoryIcon: subcategoryIcon,
+                    yearMonth,
+                    monthLabel,
+                  });
+                }}
               />
             </View>
           ) : null}
         </View>
       );
     },
-    [colors, currencySymbol, totalAmount, categoryColor, categoryIcon, monthLabel, transactions],
+    [colors, currencySymbol, totalAmount, categoryColor, categoryIcon, monthLabel, transactions, yearMonth],
   );
 
   const listEmpty = useMemo(

@@ -8,7 +8,7 @@ import ExpenseCategoryAccordion from './ExpenseCategoryAccordion';
 import PrimaryButton from '../atoms/PrimaryButton';
 import Icon from '../atoms/Icons';
 import useThemeColors from '../../hooks/useThemeColors';
-import {goBack, navigate} from '../../utils/navigationUtils';
+import {goBack, navigate, replace} from '../../utils/navigationUtils';
 import {useDispatch, useSelector} from 'react-redux';
 import {selectCurrencySymbol} from '../../redux/slice/currencyDataSlice';
 import {selectUserId} from '../../redux/slice/userIdSlice';
@@ -171,6 +171,23 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
               ) : null
             }
           />
+          {isAddButton ? (
+            <View style={[gs.row, gs.gap8, gs.mt15]}>
+              <View style={[gs.py8, gs.px14, gs.rounded12, {backgroundColor: colors.primaryText}]}>
+                <PrimaryText size={13} weight="semibold" color={colors.buttonText}>
+                  支出
+                </PrimaryText>
+              </View>
+              <TouchableOpacity
+                onPress={() => replace('AddIncomeScreen')}
+                activeOpacity={0.7}
+                style={[gs.py8, gs.px14, gs.rounded12, {backgroundColor: colors.secondaryAccent}]}>
+                <PrimaryText size={13} color={colors.primaryText}>
+                  收入
+                </PrimaryText>
+              </TouchableOpacity>
+            </View>
+          ) : null}
       </View>
 
       <CustomInput
