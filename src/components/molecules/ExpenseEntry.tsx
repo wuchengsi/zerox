@@ -1,10 +1,10 @@
 import {ScrollView, TextInput, TouchableOpacity, View} from 'react-native';
-import React, {useCallback, useEffect, useState, memo} from 'react';
+import React, {useCallback, useEffect, useMemo, useState, memo} from 'react';
 import PrimaryView from '../atoms/PrimaryView';
 import AppHeader from '../atoms/AppHeader';
 import CustomInput from '../atoms/CustomInput';
 import PrimaryText from '../atoms/PrimaryText';
-import CategoryContainer from './CategoryContainer';
+import ExpenseCategoryAccordion from './ExpenseCategoryAccordion';
 import PrimaryButton from '../atoms/PrimaryButton';
 import Icon from '../atoms/Icons';
 import useThemeColors from '../../hooks/useThemeColors';
@@ -12,13 +12,13 @@ import {goBack, navigate} from '../../utils/navigationUtils';
 import {useDispatch, useSelector} from 'react-redux';
 import {selectCurrencySymbol} from '../../redux/slice/currencyDataSlice';
 import {selectUserId} from '../../redux/slice/userIdSlice';
-import {fetchCategories, selectActiveCategories} from '../../redux/slice/categoryDataSlice';
+import {fetchCategories, selectExpenseCategoryGroups} from '../../redux/slice/categoryDataSlice';
 import {createExpense, updateExpenseById} from '../../watermelondb/services';
 import {fetchExpensesByMonth, invalidateExpenseCache} from '../../redux/slice/expenseDataSlice';
 import DatePicker from '../atoms/DatePicker';
 import {getISODateTime, formatDate} from '../../utils/dateUtils';
 import {ensureYearInCache} from '../../utils/availableYearsCache';
-import {expenseAmountSchema, expenseDescriptionSchema, expenseSchema} from '../../utils/validationSchema';
+import {expenseAmountSchema, expenseSchema} from '../../utils/validationSchema';
 import {CategoryData as CategoryDocType} from '../../watermelondb/services';
 import {AppDispatch} from '../../redux/store';
 import {gs} from '../../styles/globalStyles';
@@ -32,17 +32,31 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
   const expenseData = route?.params;
   const isAddButton = type === 'Add';
   const [hasInteracted, setHasInteracted] = useState(false);
-  const categories = useSelector(selectActiveCategories);
+  const categoryGroups = useSelector(selectExpenseCategoryGroups);
+  const categories = useMemo(
+    () => categoryGroups.flatMap(group => group.children),
+    [categoryGroups],
+  );
   const [selectedCategories, setSelectedCategories] = useState<CategoryDocType[]>(
     isAddButton
       ? []
-      : categories?.filter((category: CategoryDocType) => category?.name === expenseData?.category?.name) ?? [],
+      : categories?.filter((category: CategoryDocType) => category?.id === expenseData?.category?.id) ?? [],
   );
+
+  useEffect(() => {
+    if (!isAddButton && selectedCategories.length === 0 && expenseData?.category?.id) {
+      const matched = categories.find(
+        (category: CategoryDocType) => category.id === expenseData.category.id,
+      );
+      if (matched) {
+        setSelectedCategories([matched]);
+      }
+    }
+  }, [categories, expenseData?.category?.id, isAddButton, selectedCategories.length]);
 
   const [createdAt, setCreatedAt] = useState(isAddButton ? getISODateTime() : expenseData?.expenseDate ?? getISODateTime());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [expenseTitle, setExpenseTitle] = useState(isAddButton ? '' : expenseData?.expenseTitle ?? '');
-  const [expenseDescription, setExpenseDescription] = useState(isAddButton ? '' : expenseData?.expenseDescription ?? '');
   const [expenseAmount, setExpenseAmount] = useState(isAddButton ? '' : String(expenseData?.expenseAmount ?? ''));
 
   const expenseAmountError = hasInteracted
@@ -51,7 +65,6 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
 
   const isValid =
     expenseSchema.safeParse(expenseTitle).success &&
-    expenseDescriptionSchema.safeParse(expenseDescription).success &&
     expenseAmountSchema.safeParse(Number(expenseAmount)).success;
 
   const userId = useSelector(selectUserId);
@@ -78,7 +91,7 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
     }
     const categoryId = selectedCategories[0].id;
     try {
-      await createExpense(userId, expenseTitle, Number(expenseAmount), expenseDescription, categoryId, createdAt);
+      await createExpense(userId, expenseTitle, Number(expenseAmount), categoryId, createdAt);
 
       const yearMonth = formatDate(createdAt, 'YYYY-MM');
       const year = Number.parseInt(formatDate(createdAt, 'YYYY'), 10);
@@ -91,7 +104,7 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
         console.error('Error creating expense:', error);
       }
     }
-  }, [isValid, selectedCategories, userId, expenseTitle, expenseAmount, expenseDescription, createdAt, dispatch]);
+  }, [isValid, selectedCategories, userId, expenseTitle, expenseAmount, createdAt, dispatch]);
 
   const handleUpdateExpense = useCallback(async () => {
     if (!isValid || selectedCategories.length === 0) {
@@ -104,7 +117,6 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
         categoryId,
         expenseTitle,
         Number(expenseAmount),
-        expenseDescription,
         createdAt,
       );
 
@@ -125,14 +137,13 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
     expenseData?.expenseId,
     expenseTitle,
     expenseAmount,
-    expenseDescription,
     createdAt,
     dispatch,
   ]);
 
   const toggleCategorySelection = useCallback(
     (category: CategoryDocType) => {
-      if (selectedCategories.includes(category)) {
+      if (selectedCategories[0]?.id === category.id) {
         setSelectedCategories([]);
       } else {
         setSelectedCategories([category]);
@@ -170,15 +181,6 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
         label="标题"
         schema={expenseSchema}
       />
-      <CustomInput
-        colors={colors}
-        input={expenseDescription}
-        setInput={setExpenseDescription}
-        placeholder="例如 用支付宝"
-        label="备注"
-        schema={expenseDescriptionSchema}
-      />
-
       <PrimaryText size={12} color={colors.secondaryText} style={gs.mb5}>金额</PrimaryText>
       <View
         style={[
@@ -226,8 +228,8 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
 
       <PrimaryText size={12} color={colors.secondaryText} style={gs.mb8}>分类</PrimaryText>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <CategoryContainer
-          categories={categories}
+        <ExpenseCategoryAccordion
+          groups={categoryGroups}
           colors={colors}
           toggleCategorySelection={toggleCategorySelection}
           selectedCategories={selectedCategories}

@@ -1,5 +1,6 @@
 import {migration_001} from './scripts/001_sanitize_icon_color';
 import {migration_002} from './scripts/002_remap_category_colors';
+import {migration_003} from './scripts/003_category_income_foundation';
 
 export interface DataMigration {
   version: number;
@@ -19,4 +20,5 @@ export interface DataMigration {
 export const DATA_MIGRATIONS: DataMigration[] = [
   migration_001,
   migration_002,
+  migration_003,
 ];

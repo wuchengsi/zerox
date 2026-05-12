@@ -34,6 +34,11 @@ export const upgradeExportData = (raw: RawExport): ExportData => {
     version = 3;
   }
 
+  if (version < 4) {
+    data = upgradeV3toV4(data);
+    version = 4;
+  }
+
   if (__DEV__ && version < CURRENT_EXPORT_VERSION) {
     console.warn(`Export format v${version} is behind current v${CURRENT_EXPORT_VERSION}`);
   }
@@ -88,4 +93,19 @@ const upgradeV2toV3 = (data: ExportData): ExportData => ({
     ...d,
     color: remapColor(d.color),
   })),
+});
+
+const upgradeV3toV4 = (data: ExportData): ExportData => ({
+  ...data,
+  categories: data.categories.map(c => ({
+    ...c,
+    kind: c.kind ?? 'expense',
+  })),
+  expenses: data.expenses.map(expense => ({
+    title: expense.title,
+    amount: expense.amount,
+    category: expense.category,
+    date: expense.date,
+  })),
+  incomes: data.incomes ?? [],
 });

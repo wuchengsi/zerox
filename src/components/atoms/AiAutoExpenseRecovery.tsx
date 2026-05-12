@@ -45,7 +45,11 @@ const AiAutoExpenseRecovery = () => {
           return;
         }
 
-        const loadedCategories = categories.length > 0 ? categories : await dispatch(fetchCategories()).unwrap();
+        const loadedCategories = categories.length > 0
+          ? categories
+          : (await dispatch(fetchCategories()).unwrap()).filter(
+              category => category.categoryStatus && category.kind === 'expense' && !!category.parentId,
+            );
         if (!loadedCategories.some(category => category.categoryStatus)) {
           return;
         }

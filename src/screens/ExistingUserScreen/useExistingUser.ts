@@ -14,6 +14,9 @@ import {
   createCurrency,
   createExpense,
   createDebt,
+  createIncome,
+  ensureDefaultCategoriesForUser,
+  getAllCategoriesByUserId,
 } from '../../watermelondb/services';
 import {fetchCategories} from '../../redux/slice/categoryDataSlice';
 import {fetchDebtors} from '../../redux/slice/debtorDataSlice';
@@ -26,6 +29,7 @@ import {setIsOnboarded} from '../../redux/slice/isOnboardedSlice';
 import {AppDispatch} from '../../redux/store';
 import {upgradeExportData} from '../../backend/export/upgrader';
 import type {ExportData} from '../../backend/export/format';
+import {LEGACY_CATEGORY_MAP} from '../../constants/defaultCategories';
 
 type ImportedData = ExportData;
 
@@ -102,11 +106,46 @@ const useExistingUser = () => {
 
     setSyncStatus(prev => ({...prev, categories: 'syncing'}));
     try {
+      await ensureDefaultCategoriesForUser(userId);
+      const existingCategories = await getAllCategoriesByUserId(userId);
+      const findCategory = (name: string, parentName?: string) =>
+        existingCategories.find(category => {
+          if (parentName) {
+            return category.name === name && category.parent?.name === parentName;
+          }
+          return category.name === name && !category.parentId;
+        });
+
+      for (const category of existingCategories) {
+        categoryIdMap.set(category.name, category.id);
+        if (category.parent?.name) {
+          categoryIdMap.set(`${category.parent.name}·${category.name}`, category.id);
+        }
+      }
+
       for (const categoryData of data.categories) {
-        const {name, icon, color} = categoryData;
-        const newCategoryId = await createCategory(name, userId, icon ?? null, color ?? null);
+        const {name, icon, color, kind, parentName} = categoryData;
+        const existing = findCategory(name, parentName);
+        if (existing) {
+          categoryIdMap.set(name, existing.id);
+          if (parentName) {
+            categoryIdMap.set(`${parentName}·${name}`, existing.id);
+          }
+          continue;
+        }
+
+        let parentId: string | null = null;
+        if (parentName) {
+          const parent = findCategory(parentName);
+          parentId = parent?.id ?? null;
+        }
+
+        const newCategoryId = await createCategory(name, userId, icon ?? null, color ?? null, kind ?? 'expense', parentId);
         if (newCategoryId) {
           categoryIdMap.set(name, newCategoryId);
+          if (parentName) {
+            categoryIdMap.set(`${parentName}·${name}`, newCategoryId);
+          }
         }
       }
       setSyncStats(prev => ({...prev, categories: data.categories.length}));
@@ -160,10 +199,15 @@ const useExistingUser = () => {
     try {
       let expenseCount = 0;
       for (const expenseData of data.expenses) {
-        const {title, amount, description, category, date} = expenseData;
-        const categoryId = categoryIdMap.get(category.name);
+        const {title, amount, category, date} = expenseData;
+        const mapped = category.parentName
+          ? {parent: category.parentName, child: category.name}
+          : LEGACY_CATEGORY_MAP[category.name] ?? LEGACY_CATEGORY_MAP.其他;
+        const categoryId =
+          categoryIdMap.get(`${mapped.parent}·${mapped.child}`) ??
+          categoryIdMap.get('其他·其他');
         if (categoryId) {
-          await createExpense(userId, title, amount, description ?? '', categoryId, date);
+          await createExpense(userId, title, amount, categoryId, date);
           expenseCount++;
         }
       }
@@ -175,6 +219,21 @@ const useExistingUser = () => {
         console.error('Error syncing expenses:', error);
       }
       setSyncStatus(prev => ({...prev, expenses: 'error'}));
+      throw error;
+    }
+
+    try {
+      for (const incomeData of data.incomes ?? []) {
+        const {title, amount, category, date} = incomeData;
+        const categoryId = categoryIdMap.get(category.name) ?? categoryIdMap.get('收入');
+        if (categoryId) {
+          await createIncome(userId, title, amount, categoryId, date);
+        }
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Error syncing incomes:', error);
+      }
       throw error;
     }
 

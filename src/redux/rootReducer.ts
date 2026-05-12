@@ -7,6 +7,7 @@ import userEmailReducer from './slice/userEmailSlice';
 import userIdReducer from './slice/userIdSlice';
 import categoryReducer from './slice/categoryDataSlice';
 import expenseReducer from './slice/expenseDataSlice';
+import incomeReducer from './slice/incomeDataSlice';
 import debtorReducer from './slice/debtorDataSlice';
 import debtReducer from './slice/debtDataSlice';
 import allDebtReducer from './slice/allDebtDataSlice';
@@ -24,6 +25,7 @@ const rootReducer = combineReducers({
   userId: userIdReducer,
   category: categoryReducer,
   expense: expenseReducer,
+  income: incomeReducer,
   debtor: debtorReducer,
   debt: debtReducer,
   allDebt: allDebtReducer,

@@ -9,6 +9,8 @@ export type UpdateCategoryScreenRouteProp = RouteProp<
       categoryName: string;
       categoryIcon: string;
       categoryColor: string;
+      categoryKind?: 'expense' | 'income';
+      parentId?: string;
     };
   },
   'UpdateCategoryScreen'

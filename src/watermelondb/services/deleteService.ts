@@ -2,6 +2,7 @@ import {database} from '../database';
 import User from '../models/User';
 import Category from '../models/Category';
 import Expense from '../models/Expense';
+import Income from '../models/Income';
 import Currency from '../models/Currency';
 import Debtor from '../models/Debtor';
 import Debt from '../models/Debt';
@@ -17,6 +18,7 @@ export const deleteAllData = async (): Promise<void> => {
       const users = await database.get<User>('users').query().fetch();
       const categories = await database.get<Category>('categories').query().fetch();
       const expenses = await database.get<Expense>('expenses').query().fetch();
+      const incomes = await database.get<Income>('incomes').query().fetch();
       const currencies = await database.get<Currency>('currencies').query().fetch();
       const debtors = await database.get<Debtor>('debtors').query().fetch();
       const debts = await database.get<Debt>('debts').query().fetch();
@@ -26,6 +28,7 @@ export const deleteAllData = async (): Promise<void> => {
         ...users,
         ...categories,
         ...expenses,
+        ...incomes,
         ...currencies,
         ...debtors,
         ...debts,

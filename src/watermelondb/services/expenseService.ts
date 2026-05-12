@@ -8,7 +8,6 @@ export interface ExpenseData {
   id: string;
   title: string;
   amount: number;
-  description?: string;
   categoryId: string;
   userId: string;
   date: string;
@@ -21,8 +20,34 @@ export interface ExpenseWithCategory extends ExpenseData {
     name: string;
     icon?: string;
     color: string;
+    parentId?: string;
+    parentName?: string;
+    parentIcon?: string;
+    parentColor?: string;
   };
 }
+
+const buildCategoryMap = (categories: Category[]) => {
+  const rawMap = new Map(categories.map(cat => [cat.id, cat]));
+  return new Map(
+    categories.map(cat => {
+      const parent = cat.parentId ? rawMap.get(cat.parentId) : undefined;
+      return [
+        cat.id,
+        {
+          id: cat.id,
+          name: cat.name,
+          icon: cat.icon ?? '',
+          color: cat.color ?? '#808080',
+          parentId: cat.parentId ?? '',
+          parentName: parent?.name,
+          parentIcon: parent?.icon ?? '',
+          parentColor: parent?.color ?? '',
+        },
+      ];
+    }),
+  );
+};
 
 /**
  * Creates a new expense
@@ -31,7 +56,6 @@ export const createExpense = async (
   userId: string,
   title: string,
   amount: number,
-  description: string,
   categoryId: string,
   date: string,
 ): Promise<string> => {
@@ -40,7 +64,6 @@ export const createExpense = async (
     const expense = await database.get<Expense>('expenses').create(exp => {
       exp.title = title;
       exp.amount = amount;
-      exp.description = description || undefined;
       exp.categoryId = categoryId;
       exp.userId = userId;
       exp.date = date;
@@ -58,7 +81,6 @@ export const updateExpenseById = async (
   categoryId?: string,
   newTitle?: string,
   newAmount?: number,
-  newDescription?: string,
   newDate?: string,
 ): Promise<void> => {
   await database.write(async () => {
@@ -69,9 +91,6 @@ export const updateExpenseById = async (
       }
       if (newAmount !== undefined) {
         exp.amount = newAmount;
-      }
-      if (newDescription !== undefined) {
-        exp.description = newDescription;
       }
       if (newDate !== undefined) {
         exp.date = newDate;
@@ -107,7 +126,6 @@ export const getAllExpensesByUserId = async (
     id: e.id,
     title: e.title,
     amount: e.amount,
-    description: e.description ?? '',
     categoryId: e.categoryId,
     userId: e.userId,
     date: e.date,
@@ -133,12 +151,7 @@ export const getAllExpensesByUserIdWithCategory = async (
     .fetch();
 
   // Create a map of categoryId -> category for fast lookup
-  const categoryMap = new Map(
-    categories.map(cat => [
-      cat.id,
-      {id: cat.id, name: cat.name, icon: cat.icon ?? '', color: cat.color ?? '#808080'},
-    ]),
-  );
+  const categoryMap = buildCategoryMap(categories);
 
   // Join expenses with their categories
   return expenses.map(e => {
@@ -147,7 +160,6 @@ export const getAllExpensesByUserIdWithCategory = async (
       id: e.id,
       title: e.title,
       amount: e.amount,
-      description: e.description ?? '',
       categoryId: e.categoryId,
       userId: e.userId,
       date: e.date,
@@ -180,12 +192,7 @@ export const getAllExpensesByDate = async (
     .fetch();
 
   // Create a map of categoryId -> category for fast lookup
-  const categoryMap = new Map(
-    categories.map(cat => [
-      cat.id,
-      {id: cat.id, name: cat.name, icon: cat.icon ?? '', color: cat.color ?? '#808080'},
-    ]),
-  );
+  const categoryMap = buildCategoryMap(categories);
 
   // Return expenses with category data
   return expenses.map(e => {
@@ -194,7 +201,6 @@ export const getAllExpensesByDate = async (
       id: e.id,
       title: e.title,
       amount: e.amount,
-      description: e.description ?? '',
       categoryId: e.categoryId,
       userId: e.userId,
       date: e.date,
@@ -223,12 +229,7 @@ export const getAllExpensesByMonth = async (
     .query(Q.where('user_id', userId))
     .fetch();
 
-  const categoryMap = new Map(
-    categories.map(cat => [
-      cat.id,
-      {id: cat.id, name: cat.name, icon: cat.icon ?? '', color: cat.color ?? '#808080'},
-    ]),
-  );
+  const categoryMap = buildCategoryMap(categories);
 
   return expenses.map(e => {
     const category = categoryMap.get(e.categoryId);
@@ -236,7 +237,6 @@ export const getAllExpensesByMonth = async (
       id: e.id,
       title: e.title,
       amount: e.amount,
-      description: e.description ?? '',
       categoryId: e.categoryId,
       userId: e.userId,
       date: e.date,
@@ -253,32 +253,40 @@ export const getAllExpensesByCategoryAndMonth = async (
   categoryId: string,
   yearMonth: string,
 ): Promise<ExpenseWithCategory[]> => {
+  const categoryRecord = await database.get<Category>('categories').find(categoryId);
+  let categoryIds = [categoryId];
+
+  if (!categoryRecord.parentId) {
+    const children = await database
+      .get<Category>('categories')
+      .query(Q.where('user_id', userId), Q.where('parent_id', categoryId))
+      .fetch();
+    categoryIds = children.length > 0 ? children.map(child => child.id) : [categoryId];
+  }
+
   const expenses = await database
     .get<Expense>('expenses')
     .query(
       Q.where('user_id', userId),
-      Q.where('category_id', categoryId),
+      Q.where('category_id', Q.oneOf(categoryIds)),
       Q.where('date', Q.like(`${Q.sanitizeLikeString(yearMonth)}%`)),
     )
     .fetch();
 
-  const category = await database.get<Category>('categories').find(categoryId);
-  const categoryData = {
-    id: category.id,
-    name: category.name,
-    icon: category.icon ?? '',
-    color: category.color ?? '#808080',
-  };
+  const categories = await database
+    .get<Category>('categories')
+    .query(Q.where('user_id', userId))
+    .fetch();
+  const categoryMap = buildCategoryMap(categories);
 
   return expenses.map(e => ({
     id: e.id,
     title: e.title,
     amount: e.amount,
-    description: e.description ?? '',
     categoryId: e.categoryId,
     userId: e.userId,
     date: e.date,
-    category: categoryData,
+    category: categoryMap.get(e.categoryId),
   }));
 };
 
@@ -316,7 +324,6 @@ export const getExpenseById = async (
       id: expense.id,
       title: expense.title,
       amount: expense.amount,
-      description: expense.description ?? '',
       categoryId: expense.categoryId,
       userId: expense.userId,
       date: expense.date,

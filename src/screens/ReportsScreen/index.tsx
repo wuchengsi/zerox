@@ -53,15 +53,22 @@ const ReportsScreen = () => {
 
     filteredTransactions?.forEach((transaction: any) => {
       const {amount, category} = transaction;
-      const categoryName = category?.name ?? '未知分类';
-      const categoryColor = category?.color ?? '#808080';
+      const categoryName = category?.parentName ?? category?.name ?? '未知分类';
+      const categoryColor = category?.parentColor ?? category?.color ?? '#808080';
+      const categoryId = category?.parentId || category?.id;
+      const categoryIcon = category?.parentIcon || category?.icon;
 
       if (categoryMap.has(categoryName)) {
         const existing = categoryMap.get(categoryName)!;
         existing.amount += amount;
       } else {
         categoryMap.set(categoryName, {
-          category: {name: categoryName, color: categoryColor, ...category},
+          category: {
+            id: categoryId,
+            name: categoryName,
+            color: categoryColor,
+            icon: categoryIcon,
+          },
           amount,
         });
       }
@@ -276,7 +283,12 @@ const ReportsScreen = () => {
               <PrimaryText size={11} color={colors.secondaryText}>多</PrimaryText>
             </View>
 
-            <View style={[gs.mt20, gs.mb20]}>{renderPieChart()}</View>
+            <View style={[gs.mt20, gs.mb20]}>
+              <PrimaryText size={13} weight="semibold" style={gs.mb10}>
+                大类统计
+              </PrimaryText>
+              {renderPieChart()}
+            </View>
           </>
         )}
       </ScrollView>

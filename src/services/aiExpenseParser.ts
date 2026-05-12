@@ -83,6 +83,9 @@ const CATEGORY_ALIASES: Record<string, string[]> = {
 const normalizeText = (value: string): string =>
   value.trim().toLowerCase().replace(/\s+/g, '');
 
+const getCategoryDisplayName = (category: CategoryData): string =>
+  category.parent?.name ? `${category.parent.name}·${category.name}` : category.name;
+
 export const normalizeChatCompletionsUrl = (apiBaseUrl: string): string => {
   const trimmed = apiBaseUrl.trim().replace(/\/+$/, '');
   if (trimmed.endsWith('/chat/completions')) {
@@ -197,7 +200,12 @@ export const matchCategory = (
   const activeCategories = categories.filter(category => category.categoryStatus);
   const joinedHint = normalizeText(`${categoryName} ${categoryHint}`);
 
-  const exact = activeCategories.find(category => normalizeText(category.name) === normalizeText(categoryName));
+  const exact = activeCategories.find(category => {
+    const normalizedName = normalizeText(category.name);
+    const normalizedDisplayName = normalizeText(getCategoryDisplayName(category));
+    const normalizedCategoryName = normalizeText(categoryName);
+    return normalizedName === normalizedCategoryName || normalizedDisplayName === normalizedCategoryName;
+  });
   if (exact) {
     return {category: exact, usedFallback: false};
   }
@@ -205,7 +213,8 @@ export const matchCategory = (
   if (joinedHint) {
     const contains = activeCategories.find(category => {
       const name = normalizeText(category.name);
-      return joinedHint.includes(name) || name.includes(joinedHint);
+      const displayName = normalizeText(getCategoryDisplayName(category));
+      return joinedHint.includes(name) || name.includes(joinedHint) || joinedHint.includes(displayName);
     });
     if (contains) {
       return {category: contains, usedFallback: false};
@@ -213,7 +222,10 @@ export const matchCategory = (
   }
 
   for (const category of activeCategories) {
-    const aliases = CATEGORY_ALIASES[category.name] ?? [];
+    const aliases = [
+      ...(CATEGORY_ALIASES[category.name] ?? []),
+      ...(category.parent?.name ? CATEGORY_ALIASES[category.parent.name] ?? [] : []),
+    ];
     if (aliases.some(alias => joinedHint.includes(normalizeText(alias)))) {
       return {category, usedFallback: false};
     }
@@ -323,7 +335,7 @@ export const parseNaturalLanguageExpenses = async ({
   const url = normalizeChatCompletionsUrl(settings.apiBaseUrl);
   const prompt = buildAiExpensePrompt(
     trimmedInput,
-    categories.filter(category => category.categoryStatus).map(category => category.name),
+    categories.filter(category => category.categoryStatus).map(getCategoryDisplayName),
     currentDateTime,
   );
 

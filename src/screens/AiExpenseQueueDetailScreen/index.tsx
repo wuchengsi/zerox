@@ -119,11 +119,17 @@ const AiExpenseQueueDetailScreen = () => {
       return;
     }
 
-    const loadedCategories = categories.length > 0 ? categories : await dispatch(fetchCategories()).unwrap();
+    const loadedCategories = categories.length > 0
+      ? categories
+      : (await dispatch(fetchCategories()).unwrap()).filter(
+          category => category.categoryStatus && category.kind === 'expense' && !!category.parentId,
+        );
     const referenceDateTime = getISODateTime();
     const promptText = buildAiExpensePrompt(
       trimmedInput,
-      loadedCategories.filter(category => category.categoryStatus).map(category => category.name),
+      loadedCategories
+        .filter(category => category.categoryStatus)
+        .map(category => category.parent?.name ? `${category.parent.name}·${category.name}` : category.name),
       referenceDateTime,
     );
     createQueuedAiAutoExpenseTask(trimmedInput, promptText, referenceDateTime);

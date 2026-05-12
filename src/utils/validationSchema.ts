@@ -17,11 +17,6 @@ export const expenseSchema = z
   .min(1, '标题至少需要 1 个字符。')
   .max(25, '标题不能超过 25 个字符。');
 
-export const expenseDescriptionSchema = z
-  .string()
-  .min(0, '备注至少需要 1 个字符。')
-  .max(50, '备注不能超过 50 个字符。');
-
 export const expenseAmountSchema = z
   .number()
   .min(0.01, '金额必须大于 0。')

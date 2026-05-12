@@ -3,8 +3,8 @@ import {field, text, immutableRelation} from '@nozbe/watermelondb/decorators';
 import type Category from './Category';
 import type User from './User';
 
-export default class Expense extends Model {
-  static table = 'expenses';
+export default class Income extends Model {
+  static table = 'incomes';
 
   static associations = {
     categories: {type: 'belongs_to' as const, key: 'category_id'},

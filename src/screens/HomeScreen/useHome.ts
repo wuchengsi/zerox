@@ -6,13 +6,18 @@ import {
   invalidateExpenseCache,
   selectExpenseData,
 } from '../../redux/slice/expenseDataSlice';
+import {
+  fetchIncomesByMonth,
+  invalidateIncomeCache,
+  selectIncomeData,
+} from '../../redux/slice/incomeDataSlice';
 import {selectMonthIndex, selectYear, setMonthSelection} from '../../redux/slice/monthSelectionSlice';
 import {selectUserName} from '../../redux/slice/userNameSlice';
 import {fetchUserData, selectUserId} from '../../redux/slice/userIdSlice';
 import {fetchCurrency, selectCurrencySymbol} from '../../redux/slice/currencyDataSlice';
 import {fetchCategories} from '../../redux/slice/categoryDataSlice';
 import {getCurrentYear, getMonthNumber, getMonthNames, sortByDateDesc} from '../../utils/dateUtils';
-import {ExpenseData as Expense} from '../../watermelondb/services';
+import {ExpenseData as Expense, IncomeWithCategory} from '../../watermelondb/services';
 import {AppDispatch} from '../../redux/store';
 import {loadAvailableYears} from '../../utils/availableYearsCache';
 import {useFocusEffect} from '@react-navigation/native';
@@ -32,7 +37,21 @@ const useHome = () => {
   const selectedYear = useSelector(selectYear);
 
   const allTransactions = useSelector(selectExpenseData) ?? [];
-  const sortedTransactions = useMemo(() => sortByDateDesc(allTransactions as Expense[]), [allTransactions]);
+  const allIncomes = useSelector(selectIncomeData) ?? [];
+  const sortedTransactions = useMemo(
+    () =>
+      sortByDateDesc([
+        ...(allTransactions as Expense[]).map(transaction => ({
+          ...transaction,
+          transactionType: 'expense' as const,
+        })),
+        ...(allIncomes as IncomeWithCategory[]).map(income => ({
+          ...income,
+          transactionType: 'income' as const,
+        })),
+      ]),
+    [allTransactions, allIncomes],
+  );
 
   const userName = useSelector(selectUserName);
   const userId = useSelector(selectUserId);
@@ -61,7 +80,9 @@ const useHome = () => {
     useCallback(() => {
       if (userId) {
         dispatch(invalidateExpenseCache());
+        dispatch(invalidateIncomeCache());
         dispatch(fetchExpensesByMonth(yearMonth));
+        dispatch(fetchIncomesByMonth(yearMonth));
       }
     }, [dispatch, userId, yearMonth]),
   );
@@ -74,7 +95,11 @@ const useHome = () => {
     if (!refreshing) return;
 
     dispatch(invalidateExpenseCache());
-    dispatch(fetchExpensesByMonth(yearMonth)).finally(() => {
+    dispatch(invalidateIncomeCache());
+    Promise.all([
+      dispatch(fetchExpensesByMonth(yearMonth)),
+      dispatch(fetchIncomesByMonth(yearMonth)),
+    ]).finally(() => {
       setRefreshing(false);
     });
   }, [dispatch, refreshing, yearMonth]);

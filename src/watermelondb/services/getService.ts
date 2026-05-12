@@ -2,6 +2,7 @@ import {database} from '../database';
 import User from '../models/User';
 import Category from '../models/Category';
 import Expense from '../models/Expense';
+import Income from '../models/Income';
 import Currency from '../models/Currency';
 import Debtor from '../models/Debtor';
 import Debt from '../models/Debt';
@@ -16,19 +17,27 @@ export type {ExportData} from '../../backend/export/format';
  */
 export const getAllData = async (): Promise<ExportData | null> => {
   try {
-    const [users, categories, expenses, currencies, debtors, debts] =
+    const [users, categories, expenses, incomes, currencies, debtors, debts] =
       await Promise.all([
         database.get<User>('users').query().fetch(),
         database.get<Category>('categories').query().fetch(),
         database.get<Expense>('expenses').query().fetch(),
+        database.get<Income>('incomes').query().fetch(),
         database.get<Currency>('currencies').query().fetch(),
         database.get<Debtor>('debtors').query().fetch(),
         database.get<Debt>('debts').query().fetch(),
       ]);
 
     const categoryMap = new Map<string, string>();
+    const parentMap = new Map<string, string>();
     categories.forEach(c => {
       categoryMap.set(c.id, c.name);
+      if (c.parentId) {
+        const parent = categories.find(parentCategory => parentCategory.id === c.parentId);
+        if (parent) {
+          parentMap.set(c.id, parent.name);
+        }
+      }
     });
 
     const debtorMap = new Map<string, string>();
@@ -45,13 +54,23 @@ export const getAllData = async (): Promise<ExportData | null> => {
         name: c.name,
         icon: sanitizeString(c.icon, DEFAULTS.icon),
         color: sanitizeString(c.color, DEFAULTS.color),
+        kind: c.kind === 'income' ? 'income' : 'expense',
+        parentName: c.parentId ? categoryMap.get(c.parentId) : undefined,
       })),
       expenses: expenses.map(e => ({
         title: e.title,
         amount: e.amount,
-        description: e.description ?? '',
-        category: {name: categoryMap.get(e.categoryId) ?? '未知分类'},
+        category: {
+          name: categoryMap.get(e.categoryId) ?? '未知分类',
+          parentName: parentMap.get(e.categoryId),
+        },
         date: e.date,
+      })),
+      incomes: incomes.map(i => ({
+        title: i.title,
+        amount: i.amount,
+        category: {name: categoryMap.get(i.categoryId) ?? '收入'},
+        date: i.date,
       })),
       currencies: currencies.map(c => ({
         code: c.code,
@@ -117,6 +136,12 @@ export const debugLogAllData = async (): Promise<void> => {
       console.log(`Expense ${index + 1}:`, JSON.stringify(expense, null, 2));
     });
 
+    console.log('\n--- INCOMES ---');
+    console.log(`Count: ${data.incomes.length}`);
+    data.incomes.forEach((income, index) => {
+      console.log(`Income ${index + 1}:`, JSON.stringify(income, null, 2));
+    });
+
     console.log('\n--- CURRENCIES ---');
     console.log(`Count: ${data.currencies.length}`);
     data.currencies.forEach((currency, index) => {
@@ -140,6 +165,7 @@ export const debugLogAllData = async (): Promise<void> => {
       users: data.users.length,
       categories: data.categories.length,
       expenses: data.expenses.length,
+      incomes: data.incomes.length,
       currencies: data.currencies.length,
       debtors: data.debtors.length,
       debts: data.debts.length,

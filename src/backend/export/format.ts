@@ -9,6 +9,8 @@
  *   v3          — WCAG 2.2 color compliance. Remaps old category/debtor colors
  *                 to the new accessible palette. DB schema stays at v2 (no schema
  *                 changes, only data-level color values).
+ *   v4          — Adds category kind/parentName and incomes. Expenses no longer
+ *                 export description.
  *
  * RULES:
  *   - Bump when the ExportData shape or data semantics change.
@@ -20,7 +22,7 @@
  *   Example: zero_v3_20260321163018.json
  *   The version in the filename matches the version inside the JSON.
  */
-export const CURRENT_EXPORT_VERSION = 3;
+export const CURRENT_EXPORT_VERSION = 4;
 
 export interface ExportData {
   users: Array<{
@@ -31,11 +33,18 @@ export interface ExportData {
     name: string;
     icon?: string;
     color?: string;
+    kind?: 'expense' | 'income';
+    parentName?: string;
   }>;
   expenses: Array<{
     title: string;
     amount: number;
-    description?: string;
+    category: {name: string; parentName?: string};
+    date: string;
+  }>;
+  incomes: Array<{
+    title: string;
+    amount: number;
     category: {name: string};
     date: string;
   }>;

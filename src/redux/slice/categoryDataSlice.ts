@@ -57,7 +57,39 @@ export const selectCategoryLoading = (state: RootState) => state.category.isLoad
 export const selectCategoryError = (state: RootState) => state.category.error;
 
 export const selectActiveCategories = createSelector([selectCategoryData], categoryData =>
-  categoryData.filter((category: Category) => category.categoryStatus === true),
+  categoryData.filter(
+    (category: Category) =>
+      category.categoryStatus === true &&
+      category.kind === 'expense' &&
+      !!category.parentId,
+  ),
+);
+
+export const selectActiveExpenseParents = createSelector([selectCategoryData], categoryData =>
+  categoryData.filter(
+    (category: Category) =>
+      category.categoryStatus === true &&
+      category.kind === 'expense' &&
+      !category.parentId,
+  ),
+);
+
+export const selectExpenseCategoryGroups = createSelector(
+  [selectActiveExpenseParents, selectActiveCategories],
+  (parents, children) =>
+    parents.map(parent => ({
+      ...parent,
+      children: children.filter(child => child.parentId === parent.id),
+    })),
+);
+
+export const selectActiveIncomeCategories = createSelector([selectCategoryData], categoryData =>
+  categoryData.filter(
+    (category: Category) =>
+      category.categoryStatus === true &&
+      category.kind === 'income' &&
+      !category.parentId,
+  ),
 );
 
 export const {categoryAdded, categoryUpdated, categoryRemoved} = categoryDataSlice.actions;

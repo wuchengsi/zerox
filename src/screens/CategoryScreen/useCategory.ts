@@ -1,6 +1,10 @@
 import {useDispatch, useSelector} from 'react-redux';
 import useThemeColors from '../../hooks/useThemeColors';
-import {fetchCategories, selectActiveCategories} from '../../redux/slice/categoryDataSlice';
+import {
+  fetchCategories,
+  selectActiveIncomeCategories,
+  selectExpenseCategoryGroups,
+} from '../../redux/slice/categoryDataSlice';
 import {useCallback, useEffect, useState} from 'react';
 import {useFocusEffect} from '@react-navigation/native';
 import {navigate} from '../../utils/navigationUtils';
@@ -10,7 +14,8 @@ import {AppDispatch} from '../../redux/store';
 const useCategory = () => {
   const colors = useThemeColors();
   const dispatch = useDispatch<AppDispatch>();
-  const categories = useSelector(selectActiveCategories);
+  const expenseGroups = useSelector(selectExpenseCategoryGroups);
+  const incomeCategories = useSelector(selectActiveIncomeCategories);
   const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
@@ -36,12 +41,16 @@ const useCategory = () => {
     categoryName: string,
     categoryIcon: string,
     categoryColor: string,
+    categoryKind: 'expense' | 'income' = 'expense',
+    parentId = '',
   ) => {
     navigate('UpdateCategoryScreen', {
       categoryId,
       categoryName,
       categoryIcon,
       categoryColor,
+      categoryKind,
+      parentId,
     });
   }, []);
 
@@ -60,7 +69,8 @@ const useCategory = () => {
     colors,
     refreshing,
     onRefresh,
-    categories,
+    expenseGroups,
+    incomeCategories,
     handleEdit,
     handleDelete,
   };

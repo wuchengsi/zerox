@@ -11,6 +11,10 @@ interface Category {
   name: string;
   icon?: string;
   color?: string;
+  parentId?: string;
+  parent?: {
+    name: string;
+  };
   categoryStatus?: boolean;
   userId?: string;
 }
@@ -27,7 +31,9 @@ const CategoryContainer: React.FC<CategoryContainerProps> = React.memo(
     return (
       <View style={[gs.row, gs.wrap]}>
         {categories.map(category => {
-          const isSelected = category?.name === selectedCategories[0]?.name;
+          const isSelected =
+            String(category.id || category._id || category.name) ===
+            String(selectedCategories[0]?.id || selectedCategories[0]?._id || selectedCategories[0]?.name);
 
           return (
             <TouchableOpacity
@@ -56,7 +62,7 @@ const CategoryContainer: React.FC<CategoryContainerProps> = React.memo(
                   size={13}
                   weight={isSelected ? 'semibold' : 'regular'}
                   color={isSelected ? colors.buttonText : colors.primaryText}>
-                  {category.name}
+                  {category.parent?.name ? `${category.parent.name}·${category.name}` : category.name}
                 </PrimaryText>
               </View>
             </TouchableOpacity>

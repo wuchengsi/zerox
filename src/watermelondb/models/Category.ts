@@ -8,6 +8,7 @@ export default class Category extends Model {
 
   static associations = {
     expenses: {type: 'has_many' as const, foreignKey: 'category_id'},
+    incomes: {type: 'has_many' as const, foreignKey: 'category_id'},
     users: {type: 'belongs_to' as const, key: 'user_id'},
   };
 
@@ -16,6 +17,8 @@ export default class Category extends Model {
   @text('user_id') userId!: string;
   @text('icon') icon?: string;
   @text('color') color!: string;
+  @text('parent_id') parentId?: string;
+  @text('kind') kind!: string;
 
   @children('expenses') expenses!: Query<Expense>;
   @immutableRelation('users', 'user_id') user!: Relation<User>;

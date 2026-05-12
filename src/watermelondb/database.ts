@@ -3,7 +3,7 @@ import SQLiteAdapter from '@nozbe/watermelondb/adapters/sqlite';
 
 import {schema} from './schema';
 import {migrations} from './migrations';
-import {User, Category, Expense, Currency, Debtor, Debt} from './models';
+import {User, Category, Expense, Income, Currency, Debtor, Debt} from './models';
 
 // Lazy initialization - database is only created on first access
 let _database: Database | null = null;
@@ -23,7 +23,7 @@ const getDatabase = (): Database => {
 
     _database = new Database({
       adapter,
-      modelClasses: [User, Category, Expense, Currency, Debtor, Debt],
+      modelClasses: [User, Category, Expense, Income, Currency, Debtor, Debt],
     });
   }
   return _database;

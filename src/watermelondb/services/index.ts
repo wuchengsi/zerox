@@ -16,8 +16,13 @@ export {
   getAllCategoriesByUserId,
   getActiveCategoriesByUserId,
   getCategoryById,
+  getCategoryByName,
+  getExpenseCategoryGroupsByUserId,
+  getActiveExpenseSubcategoriesByUserId,
+  getActiveIncomeCategoriesByUserId,
+  ensureDefaultCategoriesForUser,
 } from './categoryService';
-export type {CategoryData} from './categoryService';
+export type {CategoryData, ExpenseCategoryGroup} from './categoryService';
 
 // Expense Service
 export {
@@ -33,6 +38,16 @@ export {
   getExpenseById,
 } from './expenseService';
 export type {ExpenseData, ExpenseWithCategory} from './expenseService';
+
+// Income Service
+export {
+  createIncome,
+  updateIncomeById,
+  deleteIncomeById,
+  getAllIncomesByMonth,
+  getIncomeById,
+} from './incomeService';
+export type {IncomeData, IncomeWithCategory} from './incomeService';
 
 // Currency Service
 export {

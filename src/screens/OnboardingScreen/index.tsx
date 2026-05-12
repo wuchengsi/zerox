@@ -1,17 +1,20 @@
 import {ScrollView, TouchableOpacity, View} from 'react-native';
 import React from 'react';
 import PrimaryButton from '../../components/atoms/PrimaryButton';
-import defaultCategories from '../../../assets/jsons/defaultCategories.json';
 import useOnboarding from './useOnboarding';
 import PrimaryView from '../../components/atoms/PrimaryView';
 import PrimaryText from '../../components/atoms/PrimaryText';
 import Icon from '../../components/atoms/Icons';
 import {gs} from '../../styles/globalStyles';
+import {DEFAULT_EXPENSE_CATEGORIES} from '../../constants/defaultCategories';
 
 interface CategoryData {
   name: string;
   icon?: string;
   color?: string;
+  parentName?: string;
+  parentIcon?: string;
+  parentColor?: string;
 }
 
 const OnboardingScreen = () => {
@@ -33,8 +36,17 @@ const OnboardingScreen = () => {
         </PrimaryText>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[gs.row, gs.wrap, gs.pb80]}>
-          {defaultCategories?.map((category: CategoryData) => {
-            const isSelected = isCategorySelected(category.name);
+          {DEFAULT_EXPENSE_CATEGORIES.flatMap(group =>
+            group.children.map(child => ({
+              name: child.name,
+              icon: child.icon,
+              color: group.color,
+              parentName: group.name,
+              parentIcon: group.icon,
+              parentColor: group.color,
+            })),
+          ).map((category: CategoryData) => {
+            const isSelected = isCategorySelected(category.name, category.parentName);
 
             return (
               <TouchableOpacity key={category.name} onPress={() => toggleCategorySelection(category)} activeOpacity={0.7}>
@@ -62,7 +74,7 @@ const OnboardingScreen = () => {
                     size={13}
                     weight={isSelected ? 'semibold' : 'regular'}
                     color={isSelected ? colors.buttonText : colors.primaryText}>
-                    {category.name}
+                    {category.parentName}·{category.name}
                   </PrimaryText>
                 </View>
               </TouchableOpacity>

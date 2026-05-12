@@ -2,7 +2,7 @@ import useThemeColors from '../../hooks/useThemeColors';
 import {useDispatch, useSelector} from 'react-redux';
 import {selectCurrencySymbol} from '../../redux/slice/currencyDataSlice';
 import {RouteProp, useFocusEffect} from '@react-navigation/native';
-import {ExpenseData as Expense} from '../../watermelondb/services';
+import {ExpenseWithCategory as Expense} from '../../watermelondb/services';
 import {useCallback, useMemo} from 'react';
 import {fetchExpensesByCategory, selectEverydayExpenseData} from '../../redux/slice/everydayExpenseDataSlice';
 import {AppDispatch} from '../../redux/store';

@@ -7,9 +7,15 @@ import Icon from '../atoms/Icons';
 import {formatDate, formatCalendar} from '../../utils/dateUtils';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import {navigate} from '../../utils/navigationUtils';
-import {deleteExpenseById, ExpenseData as ExpenseDocType} from '../../watermelondb/services';
+import {
+  deleteExpenseById,
+  deleteIncomeById,
+  ExpenseData as ExpenseDocType,
+  IncomeData as IncomeDocType,
+} from '../../watermelondb/services';
 import {useDispatch} from 'react-redux';
 import {fetchExpenses, fetchExpensesByMonth, invalidateExpenseCache} from '../../redux/slice/expenseDataSlice';
+import {fetchIncomesByMonth, invalidateIncomeCache} from '../../redux/slice/incomeDataSlice';
 import PrimaryText from '../atoms/PrimaryText';
 import {fetchEverydayExpenses} from '../../redux/slice/everydayExpenseDataSlice';
 import {formatCurrency} from '../../utils/numberUtils';
@@ -22,15 +28,29 @@ interface CategoryInfo {
   name?: string;
   icon?: string;
   color?: string;
+  parentId?: string;
+  parentName?: string;
+  parentIcon?: string;
+  parentColor?: string;
 }
+
+type TransactionType = 'expense' | 'income';
 
 interface Expense extends ExpenseDocType {
   category?: CategoryInfo;
+  transactionType?: TransactionType;
 }
+
+interface Income extends IncomeDocType {
+  category?: CategoryInfo;
+  transactionType?: TransactionType;
+}
+
+type Transaction = Expense | Income;
 
 interface TransactionListProps {
   currencySymbol: string;
-  allExpenses: Array<Expense>;
+  allExpenses: Array<Transaction>;
   targetDate?: string;
   targetMonth?: string;
   edgeToEdge?: boolean;
@@ -43,7 +63,7 @@ interface TransactionListProps {
 
 interface TransactionItemProps {
   currencySymbol: string;
-  expense?: Array<Expense>;
+  expense?: Array<Transaction>;
   colors: Colors;
   dispatch: AppDispatch;
   label: string;
@@ -54,18 +74,18 @@ interface TransactionItemProps {
 }
 
 interface ExpenseRowProps {
-  expense: Expense;
+  expense: Transaction;
   colors: Colors;
   currencySymbol: string;
-  onEdit: (expense: Expense) => void;
-  onDelete: (expenseId: string) => void;
+  onEdit: (expense: Transaction) => void;
+  onDelete: (expense: Transaction) => void;
   openSwipeableRef: React.RefObject<{close: () => void} | null>;
   edgeToEdge: boolean;
 }
 
 interface GroupedExpense {
   date: string;
-  expenses: Array<Expense>;
+  expenses: Array<Transaction>;
   label: string;
 }
 
@@ -119,6 +139,7 @@ const SwipeAction = ({
 const ExpenseRow: React.FC<ExpenseRowProps> = React.memo(
   ({expense, colors, currencySymbol, onEdit, onDelete, openSwipeableRef, edgeToEdge}) => {
     const swipeableRef = useRef<any>(null);
+    const isIncome = expense.transactionType === 'income';
 
     const handleSwipeWillOpen = useCallback(() => {
       if (openSwipeableRef.current && openSwipeableRef.current !== swipeableRef.current) {
@@ -154,7 +175,7 @@ const ExpenseRow: React.FC<ExpenseRowProps> = React.memo(
               side="right"
               edgeToEdge={edgeToEdge}
               onPress={() => {
-                onDelete(String(expense.id));
+                onDelete(expense);
                 swipeableMethods.close();
               }}
             />
@@ -178,21 +199,27 @@ const ExpenseRow: React.FC<ExpenseRowProps> = React.memo(
                 <Icon
                   name={expense.category?.icon || 'circle-dot'}
                   size={18}
-                  color={expense.category?.color || colors.buttonText}
+                  color={isIncome ? colors.accentGreen : expense.category?.color || colors.buttonText}
                 />
               </View>
               <View style={[gs.flex1, gs.gap2]}>
                 <PrimaryText weight="medium" numberOfLines={1}>{expense.title}</PrimaryText>
                 <PrimaryText size={11} color={colors.secondaryText} numberOfLines={1}>
-                  {expense.category?.name}
-                  {expense.description ? ` · ${expense.description}` : ''}
+                  {expense.category?.parentName
+                    ? `${expense.category.parentName}·${expense.category.name}`
+                    : expense.category?.name}
                   {' · '}
                   {formatDate(expense.date, 'Do MMM')}
                 </PrimaryText>
               </View>
             </View>
             <View style={gs.ml10}>
-              <PrimaryText size={14} weight="semibold" variant="number">
+              <PrimaryText
+                size={14}
+                weight="semibold"
+                variant="number"
+                color={isIncome ? colors.accentGreen : colors.primaryText}>
+                {isIncome ? '+' : ''}
                 {currencySymbol}
                 {Number.isInteger(expense.amount)
                   ? formatCurrency(expense.amount)
@@ -222,7 +249,7 @@ const InlineUndo: React.FC<{
         {backgroundColor: colors.secondaryAccent},
       ]}>
       <PrimaryText size={13} color={colors.secondaryText}>
-        账单已删除
+        记录已删除
       </PrimaryText>
       <TouchableOpacity
         onPress={onUndo}
@@ -240,19 +267,29 @@ const TransactionItem: React.FC<TransactionItemProps> = React.memo(
   ({currencySymbol, expense: initialExpense, colors, dispatch, label, targetDate, targetMonth, openSwipeableRef, edgeToEdge}) => {
     const deletionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const [expenses, setExpenses] = useRecyclingState<Array<Expense>>(initialExpense || [], [initialExpense], () => {
+    const [expenses, setExpenses] = useRecyclingState<Array<Transaction>>(initialExpense || [], [initialExpense], () => {
       if (deletionTimeoutRef.current) {
         clearTimeout(deletionTimeoutRef.current);
       }
     });
     const [deletedItemId, setDeletedItemId] = useRecyclingState<string | null>(null, [initialExpense]);
-    const deletedItemRef = useRef<Expense | null>(null);
+    const deletedItemRef = useRef<Transaction | null>(null);
 
-    const handleEdit = useCallback((expense: Expense) => {
+    const handleEdit = useCallback((expense: Transaction) => {
+      if (expense.transactionType === 'income') {
+        navigate('UpdateIncomeScreen', {
+          incomeId: String(expense.id),
+          incomeTitle: expense.title,
+          category: expense.category,
+          incomeDate: expense.date,
+          incomeAmount: expense.amount,
+        });
+        return;
+      }
+
       navigate('UpdateTransactionScreen', {
         expenseId: String(expense.id),
         expenseTitle: expense.title,
-        expenseDescription: expense.description ?? '',
         category: expense.category,
         expenseDate: expense.date,
         expenseAmount: expense.amount,
@@ -260,7 +297,8 @@ const TransactionItem: React.FC<TransactionItemProps> = React.memo(
     }, []);
 
     const handleDelete = useCallback(
-      (expenseId: string) => {
+      (expense: Transaction) => {
+        const expenseId = String(expense.id);
         const deletedExpense = expenses.find(expense => String(expense.id) === expenseId) ?? null;
         deletedItemRef.current = deletedExpense;
         setDeletedItemId(expenseId);
@@ -273,15 +311,23 @@ const TransactionItem: React.FC<TransactionItemProps> = React.memo(
           setExpenses(prev => prev.filter(e => String(e.id) !== expenseId));
           setDeletedItemId(null);
           deletedItemRef.current = null;
-          await deleteExpenseById(expenseId);
-          dispatch(invalidateExpenseCache());
-          if (targetMonth) {
-            dispatch(fetchExpensesByMonth(targetMonth));
+          if (expense.transactionType === 'income') {
+            await deleteIncomeById(expenseId);
+            dispatch(invalidateIncomeCache());
+            if (targetMonth) {
+              dispatch(fetchIncomesByMonth(targetMonth));
+            }
           } else {
-            dispatch(fetchExpenses());
-          }
-          if (targetDate) {
-            dispatch(fetchEverydayExpenses(targetDate));
+            await deleteExpenseById(expenseId);
+            dispatch(invalidateExpenseCache());
+            if (targetMonth) {
+              dispatch(fetchExpensesByMonth(targetMonth));
+            } else {
+              dispatch(fetchExpenses());
+            }
+            if (targetDate) {
+              dispatch(fetchEverydayExpenses(targetDate));
+            }
           }
         }, 3000);
       },
@@ -340,7 +386,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
   const openSwipeableRef = useRef<{close: () => void} | null>(null);
 
   const groupedData: GroupedExpense[] = useMemo(() => {
-    const groupedExpenses = new Map<string, Array<Expense>>();
+    const groupedExpenses = new Map<string, Array<Transaction>>();
 
     allExpenses?.forEach(expense => {
       const date = formatDate(expense.date, 'YYYY-MM-DD');

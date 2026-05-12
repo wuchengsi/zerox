@@ -8,7 +8,7 @@ import Icon from '../components/atoms/Icons';
 import useThemeColors from '../hooks/useThemeColors';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import ReportsScreen from '../screens/ReportsScreen';
-import DebtsScreen from '../screens/DebtsScreen';
+import IncomeScreen from '../screens/IncomeScreen';
 import CategoryScreen from '../screens/CategoryScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AddTransactionsScreen from '../screens/AddTransactionsScreen';
@@ -26,6 +26,8 @@ import AiQuickExpenseScreen from '../screens/AiQuickExpenseScreen';
 import AiSettingsScreen from '../screens/AiSettingsScreen';
 import AiExpenseQueueScreen from '../screens/AiExpenseQueueScreen';
 import AiExpenseQueueDetailScreen from '../screens/AiExpenseQueueDetailScreen';
+import AddIncomeScreen from '../screens/AddIncomeScreen';
+import UpdateIncomeScreen from '../screens/UpdateIncomeScreen';
 import {gs} from '../styles/globalStyles';
 
 const screenOptions = {
@@ -52,12 +54,12 @@ const ReportsIcon = ({color}: {color: string}) => (
   </View>
 );
 
-const DebtIcon = ({color}: {color: string}) => (
+const IncomeIcon = ({color}: {color: string}) => (
   <View style={[gs.center, gs.minW70]}>
     <View style={[gs.h26, gs.center]}>
-      <Icon name="credit-card" size={ICON_SIZE} color={color} />
+      <Icon name="wallet" size={ICON_SIZE} color={color} />
     </View>
-    <Text style={[gs.text10, gs.fontMedium, gs.noFontPadding, gs.textCenter, gs.mt2, {color}]}>债务</Text>
+    <Text style={[gs.text10, gs.fontMedium, gs.noFontPadding, gs.textCenter, gs.mt2, {color}]}>收入</Text>
   </View>
 );
 
@@ -135,7 +137,7 @@ const TabStack = () => {
         component={CategoryScreen}
         options={{headerShown: false, tabBarIcon: CategoriesIcon}}
       />
-      <Tab.Screen name="DebtsScreen" component={DebtsScreen} options={{headerShown: false, tabBarIcon: DebtIcon}} />
+      <Tab.Screen name="IncomeScreen" component={IncomeScreen} options={{headerShown: false, tabBarIcon: IncomeIcon}} />
     </Tab.Navigator>
   );
 };
@@ -157,6 +159,8 @@ const HomeStack = () => {
       <Stack.Screen name="AddDebtsScreen" component={AddDebtsScreen} />
       <Stack.Screen name="UpdateDebtScreen" component={UpdateDebtScreen} />
       <Stack.Screen name="UpdateDebtorScreen" component={UpdateDebtorScreen} />
+      <Stack.Screen name="AddIncomeScreen" component={AddIncomeScreen} />
+      <Stack.Screen name="UpdateIncomeScreen" component={UpdateIncomeScreen} />
       <Stack.Screen name="AiQuickExpenseScreen" component={AiQuickExpenseScreen} />
       <Stack.Screen name="AiSettingsScreen" component={AiSettingsScreen} />
       <Stack.Screen name="AiExpenseQueueScreen" component={AiExpenseQueueScreen} />

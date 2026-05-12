@@ -11,7 +11,7 @@ import EmptyState from '../../components/atoms/EmptyState';
 import {formatCurrency} from '../../utils/numberUtils';
 import {gs, hitSlop} from '../../styles/globalStyles';
 
-const DebtsScreen = () => {
+const DebtsScreen = ({embedded = false}: {embedded?: boolean}) => {
   const {
     colors,
     allDebts,
@@ -105,11 +105,13 @@ const DebtsScreen = () => {
     </View>
   ), [amountColor, colors, currencySymbol, debtorType, overallLabel, otherAccountsDebtors.length, personDebtors.length, setDebtorType, totalDebts]);
 
-  return (
-    <PrimaryView colors={colors} useBottomPadding={false} useSidePadding={false}>
-      <View style={[gs.px16, gs.mb15]}>
-        <HeaderContainer headerText={'债务'} />
-      </View>
+  const content = (
+    <>
+      {!embedded ? (
+        <View style={[gs.px16, gs.mb15]}>
+          <HeaderContainer headerText={'债务'} />
+        </View>
+      ) : null}
       {debtors.length === 0 ? (
         <View style={gs.px16}>
           <EmptyState colors={colors} type={'Debts'} style={gs.mt30p} />
@@ -133,6 +135,16 @@ const DebtsScreen = () => {
           <Icon name="plus-circle" size={30} color={colors.primaryText} />
         </TouchableOpacity>
       </View>
+    </>
+  );
+
+  if (embedded) {
+    return <View style={gs.flex1}>{content}</View>;
+  }
+
+  return (
+    <PrimaryView colors={colors} useBottomPadding={false} useSidePadding={false}>
+      {content}
     </PrimaryView>
   );
 };

@@ -1,5 +1,6 @@
 import {View} from 'react-native';
 import React, {useMemo} from 'react';
+import {PieChart} from 'react-native-svg-charts';
 import {useRoute} from '@react-navigation/native';
 import AppHeader from '../../components/atoms/AppHeader';
 import {goBack} from '../../utils/navigationUtils';
@@ -7,6 +8,7 @@ import TransactionList from '../../components/molecules/TransactionList';
 import useCategoryTransaction, {CategoryTransactionRouteProp} from './useCategoryTransaction';
 import PrimaryView from '../../components/atoms/PrimaryView';
 import PrimaryText from '../../components/atoms/PrimaryText';
+import PieChartLabels from '../../components/atoms/PieChartLabels';
 import Icon from '../../components/atoms/Icons';
 import {formatCurrency} from '../../utils/numberUtils';
 import {gs} from '../../styles/globalStyles';
@@ -26,9 +28,37 @@ const CategoryTransactionScreen = () => {
   } = useCategoryTransaction(route);
 
   const listHeader = useMemo(
-    () => (
-      <View style={[gs.rounded12, gs.py12, gs.px14, gs.mb10, {backgroundColor: colors.secondaryAccent}]}>
-        <View style={[gs.rowCenter, gs.gap10]}>
+    () => {
+      const subcategoryTotals = new Map<string, number>();
+      const subcategoryMeta = new Map<string, {color: string; icon?: string; id?: string}>();
+      transactions.forEach(transaction => {
+        const name = transaction.category?.name ?? '未知分类';
+        subcategoryTotals.set(name, (subcategoryTotals.get(name) ?? 0) + transaction.amount);
+        if (!subcategoryMeta.has(name)) {
+          subcategoryMeta.set(name, {
+            id: transaction.category?.id,
+            color: transaction.category?.color ?? categoryColor,
+            icon: transaction.category?.icon,
+          });
+        }
+      });
+      const subcategoryPieData = Array.from(subcategoryTotals.entries())
+        .sort((a, b) => b[1] - a[1])
+        .map(([name, amount]) => {
+          const meta = subcategoryMeta.get(name);
+          return {
+            key: name,
+            value: amount,
+            svg: {fill: meta?.color ?? categoryColor, onPress: () => {}},
+            label: `${name}: ${currencySymbol} ${amount}`,
+            categoryId: meta?.id,
+            categoryIcon: meta?.icon,
+          };
+        });
+
+      return (
+        <View style={[gs.rounded12, gs.py12, gs.px14, gs.mb10, {backgroundColor: colors.secondaryAccent}]}>
+          <View style={[gs.rowCenter, gs.gap10]}>
           <View style={[gs.size36, gs.roundedFull, gs.center, {backgroundColor: categoryColor + '20'}]}>
             <Icon name={categoryIcon || 'shapes'} size={18} color={categoryColor} />
           </View>
@@ -44,9 +74,23 @@ const CategoryTransactionScreen = () => {
             </PrimaryText>
           </View>
         </View>
-      </View>
-    ),
-    [colors, currencySymbol, totalAmount, categoryColor, categoryIcon, monthLabel, transactions.length],
+          {subcategoryPieData.length > 0 ? (
+            <View style={gs.mt10}>
+              <PrimaryText size={13} weight="semibold" style={gs.mb8}>
+                小类占比
+              </PrimaryText>
+              <PieChart style={gs.h170} data={subcategoryPieData} />
+              <PieChartLabels
+                slices={subcategoryPieData}
+                colors={colors}
+                currencySymbol={currencySymbol}
+              />
+            </View>
+          ) : null}
+        </View>
+      );
+    },
+    [colors, currencySymbol, totalAmount, categoryColor, categoryIcon, monthLabel, transactions],
   );
 
   const listEmpty = useMemo(

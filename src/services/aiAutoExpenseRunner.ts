@@ -40,7 +40,9 @@ export const isAiAutoExpenseQueueProcessing = (): boolean => isProcessingQueue;
 const buildPromptForTask = (input: string, categories: CategoryData[], currentDateTime: string): string =>
   buildAiExpensePrompt(
     input,
-    categories.filter(category => category.categoryStatus).map(category => category.name),
+    categories
+      .filter(category => category.categoryStatus)
+      .map(category => category.parent?.name ? `${category.parent.name}·${category.name}` : category.name),
     currentDateTime,
   );
 
@@ -111,7 +113,6 @@ const runSingleTask = async ({
           userId,
           item.title,
           item.amount ?? 0,
-          item.description,
           item.categoryId ?? '',
           item.date,
         );

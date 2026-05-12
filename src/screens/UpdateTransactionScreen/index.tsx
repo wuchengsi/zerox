@@ -8,7 +8,6 @@ export type UpdateTransactionScreenRouteProp = RouteProp<
     UpdateTransactionScreen: {
       expenseId: string;
       expenseTitle: string;
-      expenseDescription: string;
       category: Category;
       expenseDate: string;
       expenseAmount: string;
