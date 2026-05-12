@@ -94,7 +94,7 @@ export const normalizeChatCompletionsUrl = (apiBaseUrl: string): string => {
 export const buildAiExpensePrompt = (
   input: string,
   categoryNames: string[],
-  currentDateTime: string,
+  referenceDateTime: string,
 ): string => {
   const categories = categoryNames.length > 0 ? categoryNames.join('、') : '其他';
 
@@ -102,17 +102,18 @@ export const buildAiExpensePrompt = (
     '你是 Zero 记账应用的自然语言支出解析器。',
     '只解析支出记录，不要解析收入、转账、预算或理财建议。',
     '用户可能输入一句话、多行文本、带日期上下文的文本，或一句流水式文本。',
-    `当前日期时间：${currentDateTime}`,
+    `用户提交时间：${referenceDateTime}`,
     `可用分类名称：${categories}`,
     '请只返回 JSON，不要返回 Markdown，不要解释。',
     'JSON 格式必须是：{"items":[{"title":"消费标题","amount":数字或null,"categoryName":"可用分类名称或空字符串","categoryHint":"分类线索","date":"YYYY-MM-DDTHH:mm:ss","description":"备注"}]}',
     '规则：',
     '1. 单条输入也按 items 数组返回。',
     '2. 一行一条、多行多条、昨天/今天/周一等上下文都要拆成独立条目。',
-    '3. 没有日期时用当前日期；没有具体时间时用当前时间。',
-    '4. 金额无法判断时 amount 必须为 null。',
-    '5. 分类只能从可用分类名称中选择；不确定时 categoryName 为空，categoryHint 写判断依据。',
-    '6. 支付方式、地点、用途等可放入 description。',
+    '3. 今天、昨天、昨晚、周一等相对日期都以用户提交时间为基准。',
+    '4. 没有日期时用用户提交当天；没有具体时间时用用户提交时间。',
+    '5. 金额无法判断时 amount 必须为 null。',
+    '6. 分类只能从可用分类名称中选择；不确定时 categoryName 为空，categoryHint 写判断依据。',
+    '7. 支付方式、地点、用途等可放入 description。',
     `用户输入：${input}`,
   ].join('\n');
 };

@@ -13,6 +13,7 @@ export interface AiAutoExpenseTask {
   status: AiAutoExpenseTaskStatus;
   input: string;
   promptText: string;
+  referenceDateTime?: string;
   createdAt: string;
   updatedAt: string;
   startedAt?: string;
@@ -117,6 +118,7 @@ const readStoredTasks = (): AiAutoExpenseTask[] | null => {
       status,
       input: legacy.input,
       promptText: '',
+      referenceDateTime: legacy.referenceDateTime ?? legacy.createdAt ?? now(),
       createdAt: legacy.createdAt ?? now(),
       updatedAt: legacy.updatedAt ?? now(),
       startedAt: legacy.startedAt,
@@ -139,7 +141,11 @@ export const saveAiAutoExpenseTasks = (tasks: AiAutoExpenseTask[]): void => {
   emitTasks();
 };
 
-export const createQueuedAiAutoExpenseTask = (input: string, promptText: string): AiAutoExpenseTask => {
+export const createQueuedAiAutoExpenseTask = (
+  input: string,
+  promptText: string,
+  referenceDateTime?: string,
+): AiAutoExpenseTask => {
   const timestamp = now();
   const task: AiAutoExpenseTask = {
     version: 1,
@@ -147,6 +153,7 @@ export const createQueuedAiAutoExpenseTask = (input: string, promptText: string)
     status: 'queued',
     input: input.trim(),
     promptText,
+    referenceDateTime: referenceDateTime ?? timestamp,
     createdAt: timestamp,
     updatedAt: timestamp,
   };

@@ -120,12 +120,13 @@ const AiExpenseQueueDetailScreen = () => {
     }
 
     const loadedCategories = categories.length > 0 ? categories : await dispatch(fetchCategories()).unwrap();
+    const referenceDateTime = getISODateTime();
     const promptText = buildAiExpensePrompt(
       trimmedInput,
       loadedCategories.filter(category => category.categoryStatus).map(category => category.name),
-      getISODateTime(),
+      referenceDateTime,
     );
-    createQueuedAiAutoExpenseTask(trimmedInput, promptText);
+    createQueuedAiAutoExpenseTask(trimmedInput, promptText, referenceDateTime);
     void processAiAutoExpenseQueue({
       userId,
       categories: loadedCategories,
@@ -199,6 +200,11 @@ const AiExpenseQueueDetailScreen = () => {
           <PrimaryText size={12} color={colors.secondaryText} style={gs.mb5}>
             时间：{formatDate(task.createdAt, 'YYYY年M月D日 HH:mm')}
           </PrimaryText>
+          {task.referenceDateTime ? (
+            <PrimaryText size={12} color={colors.secondaryText} style={gs.mb5}>
+              日期基准：{formatDate(task.referenceDateTime, 'YYYY年M月D日 HH:mm')}
+            </PrimaryText>
+          ) : null}
           {task.errorMessage ? (
             <PrimaryText
               size={12}

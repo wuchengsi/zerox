@@ -44,6 +44,15 @@ const buildPromptForTask = (input: string, categories: CategoryData[], currentDa
     currentDateTime,
   );
 
+const getTaskReferenceDateTime = (task: AiAutoExpenseTask, fallbackDateTime: string): string => {
+  if (task.referenceDateTime) {
+    return task.referenceDateTime;
+  }
+
+  const createdAtDateTime = formatDate(task.createdAt, 'YYYY-MM-DDTHH:mm:ss');
+  return createdAtDateTime === 'Invalid Date' ? fallbackDateTime : createdAtDateTime;
+};
+
 const getItemIssues = (item: AiExpenseCandidate): string[] =>
   item.issues.length > 0 ? item.issues.map(issue => issue.message) : [];
 
@@ -67,12 +76,14 @@ const runSingleTask = async ({
   userId: string;
   categories: CategoryData[];
 }): Promise<AiAutoExpenseRunResult | null> => {
-  const currentDateTime = getISODateTime();
-  const promptText = task.promptText || buildPromptForTask(task.input, categories, currentDateTime);
+  const executionDateTime = getISODateTime();
+  const referenceDateTime = getTaskReferenceDateTime(task, executionDateTime);
+  const promptText = task.promptText || buildPromptForTask(task.input, categories, referenceDateTime);
   updateAiAutoExpenseTask(task.taskId, {
     status: 'running',
-    startedAt: task.startedAt ?? currentDateTime,
+    startedAt: task.startedAt ?? executionDateTime,
     promptText,
+    referenceDateTime,
     errorMessage: undefined,
   });
 
@@ -87,7 +98,7 @@ const runSingleTask = async ({
       input: task.input,
       settings,
       categories,
-      currentDateTime,
+      currentDateTime: referenceDateTime,
     });
     const {validItems, invalidItems} = splitAiExpenseItems(parsed.items);
     const expenseIds: string[] = [];

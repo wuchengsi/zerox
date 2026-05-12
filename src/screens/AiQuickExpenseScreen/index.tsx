@@ -136,12 +136,13 @@ const AiQuickExpenseScreen = () => {
     }
 
     const loadedCategories = categories.length > 0 ? categories : await dispatch(fetchCategories()).unwrap();
+    const referenceDateTime = getISODateTime();
     const promptText = buildAiExpensePrompt(
       trimmedInput,
       loadedCategories.filter(category => category.categoryStatus).map(category => category.name),
-      getISODateTime(),
+      referenceDateTime,
     );
-    createQueuedAiAutoExpenseTask(trimmedInput, promptText);
+    createQueuedAiAutoExpenseTask(trimmedInput, promptText, referenceDateTime);
     clearAiAutoExpenseInput();
     void processAiAutoExpenseQueue({
       userId,
