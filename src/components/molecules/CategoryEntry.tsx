@@ -16,6 +16,7 @@ import {categorySchema} from '../../utils/validationSchema';
 import {SheetManager} from 'react-native-actions-sheet';
 import {AppDispatch} from '../../redux/store';
 import {gs} from '../../styles/globalStyles';
+import {useLanguage} from '../../context/LanguageContext';
 
 interface CategoryEntryProps {
   type: string;
@@ -24,6 +25,7 @@ interface CategoryEntryProps {
 
 const CategoryEntry: React.FC<CategoryEntryProps> = ({type, route}) => {
   const colors = useThemeColors();
+  const {t} = useLanguage();
   const dispatch = useDispatch<AppDispatch>();
   const categoryData = route?.params;
   const isAddButton = type === 'Add';
@@ -127,7 +129,7 @@ const CategoryEntry: React.FC<CategoryEntryProps> = ({type, route}) => {
           <AppHeader
             onPress={goBack}
             colors={colors}
-            text={isAddButton ? '新增分类' : '编辑分类'}
+            text={isAddButton ? t('新增分类') : t('编辑分类')}
           />
         </View>
 
@@ -135,10 +137,10 @@ const CategoryEntry: React.FC<CategoryEntryProps> = ({type, route}) => {
           <View style={[gs.px12, gs.py8, gs.rounded12, {backgroundColor: colors.secondaryAccent}]}>
             <PrimaryText size={12} weight="medium">
               {categoryKind === 'income'
-                ? '收入分类'
+                ? t('收入分类')
                 : isChildCategory
-                  ? `${parentName} 的小类`
-                  : '支出大类'}
+                  ? `${parentName} ${t('的小类')}`
+                  : t('支出大类')}
             </PrimaryText>
           </View>
         </View>
@@ -147,12 +149,12 @@ const CategoryEntry: React.FC<CategoryEntryProps> = ({type, route}) => {
           colors={colors}
           input={categoryName}
           setInput={setCategoryName}
-          placeholder={categoryKind === 'income' ? '例如 工资' : isChildCategory ? '例如 地铁' : '例如 出行'}
-          label="分类名称"
+          placeholder={categoryKind === 'income' ? t('例如 工资') : isChildCategory ? t('例如 地铁') : t('例如 出行')}
+          label={t('分类名称')}
           schema={categorySchema}
         />
 
-        <PrimaryText size={12} color={colors.secondaryText} style={gs.mb8}>外观</PrimaryText>
+        <PrimaryText size={12} color={colors.secondaryText} style={gs.mb8}>{t('外观')}</PrimaryText>
         <View style={[gs.row, gs.gap8, gs.mb15]}>
           <TouchableOpacity
             onPress={handleOpenIconPicker}
@@ -180,9 +182,9 @@ const CategoryEntry: React.FC<CategoryEntryProps> = ({type, route}) => {
               />
             </View>
             <View style={gs.flex1}>
-              <PrimaryText size={11} color={colors.secondaryText}>图标</PrimaryText>
+              <PrimaryText size={11} color={colors.secondaryText}>{t('图标')}</PrimaryText>
               <PrimaryText size={13} weight="medium">
-                {selectedIcon ? '更换' : '选择'}
+                {selectedIcon ? t('更换') : t('选择')}
               </PrimaryText>
             </View>
           </TouchableOpacity>
@@ -209,9 +211,9 @@ const CategoryEntry: React.FC<CategoryEntryProps> = ({type, route}) => {
                 ]}
               />
               <View style={gs.flex1}>
-                <PrimaryText size={11} color={colors.secondaryText}>颜色</PrimaryText>
+                <PrimaryText size={11} color={colors.secondaryText}>{t('颜色')}</PrimaryText>
                 <PrimaryText size={13} weight="medium">
-                  {selectedColor ? '更换' : '选择'}
+                  {selectedColor ? t('更换') : t('选择')}
                 </PrimaryText>
               </View>
             </TouchableOpacity>
@@ -228,9 +230,9 @@ const CategoryEntry: React.FC<CategoryEntryProps> = ({type, route}) => {
               ]}>
               <View style={[gs.size32, gs.roundedFull, {backgroundColor: colors.iconContainer}]} />
               <View style={gs.flex1}>
-                <PrimaryText size={11} color={colors.secondaryText}>颜色</PrimaryText>
+                <PrimaryText size={11} color={colors.secondaryText}>{t('颜色')}</PrimaryText>
                 <PrimaryText size={13} weight="medium">
-                  跟随大类
+                  {t('跟随大类')}
                 </PrimaryText>
               </View>
             </View>
@@ -241,7 +243,7 @@ const CategoryEntry: React.FC<CategoryEntryProps> = ({type, route}) => {
       <PrimaryButton
         onPress={handleAddFromDefaultOrAddCategory}
         colors={colors}
-        buttonTitle={isAddButton ? '新增' : '更新'}
+        buttonTitle={isAddButton ? t('新增') : t('更新')}
         disabled={!isValid}
       />
     </PrimaryView>

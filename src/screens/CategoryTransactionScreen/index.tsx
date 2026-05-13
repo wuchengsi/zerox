@@ -12,6 +12,7 @@ import PieChartLabels from '../../components/atoms/PieChartLabels';
 import Icon from '../../components/atoms/Icons';
 import {formatCurrency} from '../../utils/numberUtils';
 import {gs} from '../../styles/globalStyles';
+import {useLanguage} from '../../context/LanguageContext';
 
 const SUBCATEGORY_CHART_COLORS = [
   '#1F7A5A',
@@ -27,6 +28,7 @@ const SUBCATEGORY_CHART_COLORS = [
 ];
 
 const CategoryTransactionScreen = () => {
+  const {t} = useLanguage();
   const route = useRoute<CategoryTransactionRouteProp>();
   const {
     colors,
@@ -38,6 +40,7 @@ const CategoryTransactionScreen = () => {
     categoryIcon,
     monthLabel,
     yearMonth,
+    refreshCategoryTransactions,
   } = useCategoryTransaction(route);
 
   const listHeader = useMemo(
@@ -90,7 +93,7 @@ const CategoryTransactionScreen = () => {
           {subcategoryPieData.length > 0 ? (
             <View style={gs.mt10}>
               <PrimaryText size={13} weight="semibold" style={gs.mb8}>
-                小类占比
+                {t('小类占比')}
               </PrimaryText>
               <PieChart style={gs.h170} data={subcategoryPieData} />
               <PieChartLabels
@@ -123,7 +126,7 @@ const CategoryTransactionScreen = () => {
           <Icon name="receipt" size={22} color={colors.secondaryText} />
         </View>
         <PrimaryText size={13} color={colors.secondaryText} style={gs.mt10}>
-          {categoryName} 暂无账单
+          {categoryName} {t('暂无账单')}
         </PrimaryText>
       </View>
     ),
@@ -141,6 +144,7 @@ const CategoryTransactionScreen = () => {
         targetMonth={yearMonth}
         ListHeaderComponent={listHeader}
         ListEmptyComponent={listEmpty}
+        onTransactionChanged={refreshCategoryTransactions}
       />
     </PrimaryView>
   );

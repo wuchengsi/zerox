@@ -4,6 +4,23 @@ import StorageService from '../utils/asyncStorageService';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type ResolvedTheme = 'light' | 'dark';
+export type AccentColorId = 'sage' | 'mint' | 'teal' | 'sky' | 'lavender' | 'coral';
+
+export interface AccentColorOption {
+  id: AccentColorId;
+  label: string;
+  light: string;
+  dark: string;
+}
+
+export const ACCENT_COLORS: AccentColorOption[] = [
+  {id: 'sage', label: '鼠尾草绿', light: '#6E8B3D', dark: '#B1FB98'},
+  {id: 'mint', label: '薄荷绿', light: '#3A9B7A', dark: '#8DE8C0'},
+  {id: 'teal', label: '湖蓝', light: '#2F8C95', dark: '#7EDAE2'},
+  {id: 'sky', label: '天空蓝', light: '#3B82C4', dark: '#93C5FD'},
+  {id: 'lavender', label: '薰衣草紫', light: '#8B6FD1', dark: '#C4B5FD'},
+  {id: 'coral', label: '珊瑚橙', light: '#D56F55', dark: '#FDBA91'},
+];
 
 export interface ThemeColors {
   primaryBackground: string;
@@ -71,6 +88,8 @@ interface ThemeContextType {
   colors: ThemeColors;
   isDark: boolean;
   setThemeMode: (mode: ThemeMode) => Promise<void>;
+  accentColorId: AccentColorId;
+  setAccentColor: (id: AccentColorId) => Promise<void>;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -87,9 +106,15 @@ const getInitialThemeMode = (): ThemeMode => {
   return 'system';
 };
 
+const getInitialAccentColor = (): AccentColorId => {
+  const saved = StorageService.getItemSync('accentColorPreference');
+  return ACCENT_COLORS.some(color => color.id === saved) ? saved as AccentColorId : 'sage';
+};
+
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({children}) => {
   const systemColorScheme = useColorScheme();
   const [themeMode, setThemeModeState] = useState<ThemeMode>(getInitialThemeMode);
+  const [accentColorId, setAccentColorState] = useState<AccentColorId>(getInitialAccentColor);
 
   const resolvedTheme: ResolvedTheme = useMemo(() => {
     if (themeMode === 'system') {
@@ -99,8 +124,13 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({children}) => {
   }, [themeMode, systemColorScheme]);
 
   const colors = useMemo(() => {
-    return resolvedTheme === 'dark' ? DarkColors : LightColors;
-  }, [resolvedTheme]);
+    const baseColors = resolvedTheme === 'dark' ? DarkColors : LightColors;
+    const accent = ACCENT_COLORS.find(color => color.id === accentColorId) ?? ACCENT_COLORS[0];
+    return {
+      ...baseColors,
+      accentGreen: resolvedTheme === 'dark' ? accent.dark : accent.light,
+    };
+  }, [accentColorId, resolvedTheme]);
 
   const isDark = resolvedTheme === 'dark';
 
@@ -114,6 +144,11 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({children}) => {
     setThemeModeState(mode);
   }, []);
 
+  const setAccentColor = useCallback(async (id: AccentColorId) => {
+    StorageService.setItemSync('accentColorPreference', id);
+    setAccentColorState(id);
+  }, []);
+
   const value = useMemo(
     () => ({
       themeMode,
@@ -121,8 +156,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({children}) => {
       colors,
       isDark,
       setThemeMode,
+      accentColorId,
+      setAccentColor,
     }),
-    [themeMode, resolvedTheme, colors, isDark, setThemeMode],
+    [themeMode, resolvedTheme, colors, isDark, setThemeMode, accentColorId, setAccentColor],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

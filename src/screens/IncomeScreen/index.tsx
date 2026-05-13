@@ -23,12 +23,13 @@ import {formatCurrency} from '../../utils/numberUtils';
 import {navigate} from '../../utils/navigationUtils';
 import {loadAvailableYears} from '../../utils/availableYearsCache';
 import {gs, hitSlop} from '../../styles/globalStyles';
+import {useLanguage} from '../../context/LanguageContext';
 
-const MONTHS = getMonthNames();
 const CURRENT_YEAR = getCurrentYear();
 
 const IncomeScreen = () => {
   const colors = useThemeColors();
+  const {t} = useLanguage();
   const dispatch = useDispatch<AppDispatch>();
   const [tab, setTab] = useState<'income' | 'debt'>('income');
   const [availableYears, setAvailableYears] = useState<number[]>([CURRENT_YEAR]);
@@ -36,7 +37,8 @@ const IncomeScreen = () => {
   const currencySymbol = useSelector(selectCurrencySymbol);
   const selectedMonthIndex = useSelector(selectMonthIndex);
   const selectedYear = useSelector(selectYear);
-  const selectedMonth = MONTHS[selectedMonthIndex];
+  const months = getMonthNames();
+  const selectedMonth = months[selectedMonthIndex];
   const incomes = useSelector(selectIncomeData) as IncomeWithCategory[];
   const yearMonth = `${selectedYear}-${getMonthNumber(selectedMonth)}`;
 
@@ -81,7 +83,7 @@ const IncomeScreen = () => {
   const categoryTotals = useMemo(() => {
     const map = new Map<string, {name: string; amount: number; color: string; icon?: string}>();
     for (const income of incomes) {
-      const name = income.category?.name ?? '收入';
+      const name = income.category?.name ?? t('收入');
       const current = map.get(name) ?? {
         name,
         amount: 0,
@@ -92,7 +94,7 @@ const IncomeScreen = () => {
       map.set(name, current);
     }
     return Array.from(map.values()).sort((a, b) => b.amount - a.amount);
-  }, [colors.accentGreen, incomes]);
+  }, [colors.accentGreen, incomes, t]);
 
   const handleDeleteIncome = useCallback(
     async (incomeId: string) => {
@@ -147,13 +149,13 @@ const IncomeScreen = () => {
             </PrimaryText>
           </View>
           <PrimaryText size={11} color={colors.buttonText} variant="number" style={[gs.mt4, {opacity: 0.7}]}>
-            {incomes.length} 条收入
+            {incomes.length} {t('条收入')}
           </PrimaryText>
         </TouchableOpacity>
 
         {categoryTotals.length > 0 ? (
           <View style={[gs.rounded12, gs.px14, gs.py12, gs.mb10, {backgroundColor: colors.containerColor}]}>
-            <PrimaryText size={13} weight="semibold" style={gs.mb8}>分类统计</PrimaryText>
+            <PrimaryText size={13} weight="semibold" style={gs.mb8}>{t('分类统计')}</PrimaryText>
             {categoryTotals.map(item => (
               <View key={item.name} style={[gs.rowBetweenCenter, gs.py5]}>
                 <View style={gs.rowCenter}>
@@ -190,7 +192,7 @@ const IncomeScreen = () => {
           <Icon name="wallet" size={22} color={colors.secondaryText} />
         </View>
         <PrimaryText size={13} color={colors.secondaryText} style={gs.mt10}>
-          还没有收入记录
+          {t('还没有收入记录')}
         </PrimaryText>
       </View>
     ),
@@ -219,7 +221,7 @@ const IncomeScreen = () => {
           <View style={gs.flex1}>
             <PrimaryText weight="medium" numberOfLines={1}>{income.title}</PrimaryText>
             <PrimaryText size={11} color={colors.secondaryText} numberOfLines={1}>
-              {income.category?.name ?? '收入'} · {formatCalendar(formatDate(income.date, 'YYYY-MM-DD'))}
+              {income.category?.name ?? t('收入')} · {formatCalendar(formatDate(income.date, 'YYYY-MM-DD'))}
             </PrimaryText>
           </View>
         </TouchableOpacity>
@@ -247,10 +249,10 @@ const IncomeScreen = () => {
   return (
     <PrimaryView colors={colors} useSidePadding={false} useBottomPadding={false}>
       <View style={[gs.px16, gs.mb15]}>
-        <HeaderContainer headerText={'收入'} />
+        <HeaderContainer headerText={t('收入')} />
         <View style={[gs.row, gs.gap8, gs.mt20]}>
-          {segment('income', '收入')}
-          {segment('debt', '债务')}
+          {segment('income', t('收入'))}
+          {segment('debt', t('债务'))}
         </View>
       </View>
 
@@ -272,7 +274,7 @@ const IncomeScreen = () => {
               style={[gs.size50, gs.rounded8, gs.center, {backgroundColor: colors.secondaryBackground}]}
               onPress={() => navigate('AddIncomeScreen')}
               hitSlop={hitSlop}
-              accessibilityLabel="新增收入"
+              accessibilityLabel={t('新增收入')}
               accessibilityRole="button">
               <Icon name="plus-circle" size={30} color={colors.primaryText} />
             </TouchableOpacity>

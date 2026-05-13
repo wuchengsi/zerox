@@ -30,8 +30,8 @@ import {processAiAutoExpenseQueue} from '../../services/aiAutoExpenseRunner';
 import {getISODateTime, getMonthNames, getMonthNumber} from '../../utils/dateUtils';
 import {goBack, navigate} from '../../utils/navigationUtils';
 import {gs} from '../../styles/globalStyles';
+import {useLanguage} from '../../context/LanguageContext';
 
-const MONTHS = getMonthNames();
 const INPUT_SAVE_DEBOUNCE_MS = 400;
 
 const isUnseenFailedTask = (task: AiAutoExpenseTask): boolean =>
@@ -39,6 +39,7 @@ const isUnseenFailedTask = (task: AiAutoExpenseTask): boolean =>
 
 const AiQuickExpenseScreen = () => {
   const colors = useThemeColors();
+  const {t, language} = useLanguage();
   const {showAlert} = useDialog();
   const dispatch = useDispatch<AppDispatch>();
   const userId = useSelector(selectUserId);
@@ -93,15 +94,15 @@ const AiQuickExpenseScreen = () => {
 
     void showAlert({
       type: 'warning',
-      message: `请先在设置中填写：${missingFields.join('、')}`,
-      okLabel: '去设置',
+      message: `${t('请先在设置中填写：')}${missingFields.join('、')}`,
+      okLabel: t('去设置'),
     }).then(() => {
       navigate('AiSettingsScreen');
     });
-  }, [showAlert]);
+  }, [showAlert, t]);
 
   const currentYearMonth = useMemo(
-    () => `${selectedYear}-${getMonthNumber(MONTHS[selectedMonthIndex])}`,
+    () => `${selectedYear}-${getMonthNumber(getMonthNames()[selectedMonthIndex])}`,
     [selectedMonthIndex, selectedYear],
   );
 
@@ -110,10 +111,10 @@ const AiQuickExpenseScreen = () => {
   const runningCount = tasks.filter(task => task.status === 'running').length;
   const queueSubtitle =
     runningCount > 0
-      ? `正在后台处理${'.'.repeat(processingDotCount)} 等待 ${Math.max(activeCount - runningCount, 0)} 条`
+      ? `${t('正在后台处理')}${'.'.repeat(processingDotCount)} ${t('等待处理')} ${Math.max(activeCount - runningCount, 0)}`
       : activeCount > 0
-      ? `等待处理 ${activeCount} 条`
-      : '当前没有正在处理的队列';
+      ? `${t('等待处理')} ${activeCount}`
+      : t('当前没有正在处理的队列');
 
   const refreshCurrentMonth = useCallback(async () => {
     dispatch(invalidateExpenseCache());
@@ -150,8 +151,8 @@ const AiQuickExpenseScreen = () => {
     if (missingFields.length > 0) {
       await showAlert({
         type: 'warning',
-        message: `请先在设置中填写：${missingFields.join('、')}`,
-        okLabel: '知道了',
+        message: `${t('请先在设置中填写：')}${missingFields.join('、')}`,
+        okLabel: t('知道了'),
       });
       handleOpenSettings();
       return;
@@ -161,8 +162,8 @@ const AiQuickExpenseScreen = () => {
     if (!trimmedInput) {
       await showAlert({
         type: 'warning',
-        message: '请输入要自动记账的账单记录',
-        okLabel: '知道了',
+        message: t('请输入要自动记账的账单记录'),
+        okLabel: t('知道了'),
       });
       return;
     }
@@ -195,7 +196,7 @@ const AiQuickExpenseScreen = () => {
       categories: loadedCategories,
       onTaskFinished: refreshCurrentMonth,
     });
-  }, [categories, dispatch, handleOpenSettings, input, refreshCurrentMonth, showAlert, userId]);
+  }, [categories, dispatch, handleOpenSettings, input, refreshCurrentMonth, showAlert, t, userId]);
 
   return (
     <PrimaryView colors={colors} dismissKeyboardOnTouch>
@@ -203,14 +204,14 @@ const AiQuickExpenseScreen = () => {
         <AppHeader
           onPress={goBack}
           colors={colors}
-          text="AI 快速记账"
-          subtitle="提交后进入后台队列，解析成功自动入账"
+          text={t('AI 快速记账')}
+          subtitle={t('提交后进入后台队列，解析成功自动入账')}
           rightAction={
             <TouchableOpacity
               onPress={handleOpenSettings}
               hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
               accessibilityRole="button"
-              accessibilityLabel="AI 设置">
+              accessibilityLabel={t('AI 设置')}>
               <Icon name="settings-2" size={20} color={colors.primaryText} />
             </TouchableOpacity>
           }
@@ -222,12 +223,16 @@ const AiQuickExpenseScreen = () => {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={gs.pb80}>
         <PrimaryText size={12} color={colors.secondaryText} style={gs.mb5}>
-          账单内容
+          {t('账单内容')}
         </PrimaryText>
         <TextInput
           value={input}
           onChangeText={handleInputChange}
-          placeholder={'例如：\n昨天：\n午饭 28\n瑞幸 16\n地铁 4\n今天工资 8000'}
+          placeholder={
+            language === 'en'
+              ? 'Example:\nYesterday:\nLunch 28\nCoffee 16\nMetro 4\nSalary today 8000'
+              : '例如：\n昨天：\n午饭 28\n瑞幸 16\n地铁 4\n今天工资 8000'
+          }
           placeholderTextColor={colors.secondaryText}
           multiline
           scrollEnabled
@@ -250,7 +255,7 @@ const AiQuickExpenseScreen = () => {
           <PrimaryButton
             onPress={handleAutoCreate}
             colors={colors}
-            buttonTitle="自动记账"
+            buttonTitle={t('自动记账')}
             icon="sparkles"
           />
         </View>
@@ -265,7 +270,7 @@ const AiQuickExpenseScreen = () => {
               <View style={[gs.row, gs.itemsCenter, gs.mb5]}>
                 {runningCount > 0 ? <ActivityIndicator size="small" color={colors.accentGreen} /> : null}
                 <PrimaryText size={13} weight="semibold" style={runningCount > 0 ? gs.ml8 : undefined}>
-                  AI 处理队列
+                  {t('AI 处理队列')}
                 </PrimaryText>
               </View>
               <PrimaryText size={12} color={colors.secondaryText}>
@@ -273,7 +278,7 @@ const AiQuickExpenseScreen = () => {
               </PrimaryText>
               {failedCount > 0 ? (
                 <PrimaryText size={12} color={colors.accentRed} style={gs.mt5}>
-                  有 {failedCount} 条解析失败
+                  {t('有')} {failedCount} {t('条解析失败')}
                 </PrimaryText>
               ) : null}
             </View>
@@ -283,10 +288,10 @@ const AiQuickExpenseScreen = () => {
 
         <View style={[gs.rounded12, gs.p14, gs.mt15, {backgroundColor: colors.containerColor}]}>
           <PrimaryText size={13} weight="semibold" style={gs.mb8}>
-            说明
+            {t('说明')}
           </PrimaryText>
           <PrimaryText size={12} color={colors.secondaryText} style={{lineHeight: 18}}>
-            提交后可继续录入下一条。队列会在后台顺序处理；失败记录可在队列详情中编辑后重新解析。
+            {t('提交后可继续录入下一条。队列会在后台顺序处理；失败记录可在队列详情中编辑后重新解析。')}
           </PrimaryText>
         </View>
       </ScrollView>

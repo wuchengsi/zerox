@@ -1,6 +1,7 @@
 import {z} from 'zod';
 import type {CategoryData} from '../watermelondb/services';
 import {formatDate, getISODateTime} from '../utils/dateUtils';
+import {getCurrentLanguage} from '../i18n';
 import type {AiSettings} from './aiSettingsService';
 import {getMissingAiSettingsFields} from './aiSettingsService';
 
@@ -123,6 +124,34 @@ export const buildAiExpensePrompt = (
   const incomeCategoryNames = Array.isArray(categories) ? [] : categories.incomeCategoryNames;
   const expenseCategories = expenseCategoryNames.length > 0 ? expenseCategoryNames.join('、') : '其他·其他';
   const incomeCategories = incomeCategoryNames.length > 0 ? incomeCategoryNames.join('、') : '收入';
+  const language = getCurrentLanguage();
+
+  if (language === 'en') {
+    return [
+      'You are the natural-language bookkeeping parser for the Zerox app.',
+      'Only parse expense and income records. Do not parse transfers, budgets, or financial advice.',
+      'The user may submit one sentence, many lines, text with date context, or a stream-like sentence.',
+      `Submission time: ${referenceDateTime}`,
+      `Available expense category names: ${expenseCategories}`,
+      `Available income category names: ${incomeCategories}`,
+      'Return JSON only. Do not return Markdown or explanations.',
+      'The JSON shape must be: {"items":[{"type":"expense or income","title":"title","amount":number or null,"categoryName":"available category name or empty string","categoryHint":"category clue","date":"YYYY-MM-DDTHH:mm:ss"}]}',
+      'Rules:',
+      '1. Even a single record must be returned inside the items array.',
+      '2. Split one-line-per-record, multi-line records, date sections like yesterday/today/Monday, and stream-like text into independent items.',
+      '3. Resolve relative dates such as today, yesterday, last night, and Monday against the submission time.',
+      '4. If no date is provided, use the submission date. If no exact time is provided, use the submission time.',
+      '5. If the amount cannot be determined, amount must be null.',
+      '6. type must be either expense or income.',
+      '7. Purchases, payments, food, transport, shopping, and similar outflows are expense.',
+      '8. Salary, reimbursements, refunds, red-packet income, part-time pay, investment gains, allowance, and second-hand sales are income.',
+      '9. categoryName must be selected only from the available category names for the corresponding type. Do not invent categories.',
+      '10. For expense categories, choose the most specific "parent·subcategory" category whenever possible.',
+      '11. Income categories must be selected only from the available income categories.',
+      '12. If unsure, leave categoryName empty and put the reasoning in categoryHint.',
+      `User input: ${input}`,
+    ].join('\n');
+  }
 
   return [
     '你是 Zerox 记账应用的自然语言账单解析器。',

@@ -6,6 +6,7 @@ import {BackHandler, Platform, Pressable, Text, ToastAndroid, View} from 'react-
 import {useFocusEffect} from '@react-navigation/native';
 import Icon from '../components/atoms/Icons';
 import useThemeColors from '../hooks/useThemeColors';
+import {useLanguage} from '../context/LanguageContext';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import ReportsScreen from '../screens/ReportsScreen';
 import IncomeScreen from '../screens/IncomeScreen';
@@ -37,40 +38,34 @@ const screenOptions = {
 const ICON_SIZE = 24;
 
 const HomeIcon = ({color}: {color: string}) => (
-  <View style={[gs.center, gs.minW70]}>
-    <View style={[gs.h26, gs.center]}>
-      <Icon name="home" size={ICON_SIZE} color={color} />
-    </View>
-    <Text style={[gs.text10, gs.fontMedium, gs.noFontPadding, gs.textCenter, gs.mt2, {color}]}>首页</Text>
-  </View>
+  <TabIcon color={color} icon="home" labelKey="首页" />
 );
 
 const ReportsIcon = ({color}: {color: string}) => (
-  <View style={[gs.center, gs.minW70]}>
-    <View style={[gs.h26, gs.center]}>
-      <Icon name="bar-chart-3" size={ICON_SIZE} color={color} />
-    </View>
-    <Text style={[gs.text10, gs.fontMedium, gs.noFontPadding, gs.textCenter, gs.mt2, {color}]}>统计</Text>
-  </View>
+  <TabIcon color={color} icon="bar-chart-3" labelKey="统计" />
 );
 
 const IncomeIcon = ({color}: {color: string}) => (
-  <View style={[gs.center, gs.minW70]}>
-    <View style={[gs.h26, gs.center]}>
-      <Icon name="wallet" size={ICON_SIZE} color={color} />
-    </View>
-    <Text style={[gs.text10, gs.fontMedium, gs.noFontPadding, gs.textCenter, gs.mt2, {color}]}>收入</Text>
-  </View>
+  <TabIcon color={color} icon="wallet" labelKey="收入" />
 );
 
 const CategoriesIcon = ({color}: {color: string}) => (
-  <View style={[gs.center, gs.minW70]}>
-    <View style={[gs.h26, gs.center]}>
-      <Icon name="shapes" size={ICON_SIZE} color={color} />
-    </View>
-    <Text style={[gs.text10, gs.fontMedium, gs.noFontPadding, gs.textCenter, gs.mt2, {color}]}>分类</Text>
-  </View>
+  <TabIcon color={color} icon="shapes" labelKey="分类" />
 );
+
+const TabIcon = ({color, icon, labelKey}: {color: string; icon: string; labelKey: string}) => {
+  const {t} = useLanguage();
+  return (
+    <View style={[gs.center, gs.minW70]}>
+      <View style={[gs.h26, gs.center]}>
+        <Icon name={icon} size={ICON_SIZE} color={color} />
+      </View>
+      <Text style={[gs.text10, gs.fontMedium, gs.noFontPadding, gs.textCenter, gs.mt2, {color}]}>
+        {t(labelKey)}
+      </Text>
+    </View>
+  );
+};
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -81,6 +76,7 @@ const TabBarButton = (props: any) => (
 
 const TabStack = () => {
   const colors = useThemeColors();
+  const {t} = useLanguage();
   const insets = useSafeAreaInsets();
   const lastBackPressRef = React.useRef(0);
 
@@ -98,12 +94,12 @@ const TabStack = () => {
         }
 
         lastBackPressRef.current = now;
-        ToastAndroid.show('再按一次退出', ToastAndroid.SHORT);
+        ToastAndroid.show(t('再按一次退出'), ToastAndroid.SHORT);
         return true;
       });
 
       return () => subscription.remove();
-    }, []),
+    }, [t]),
   );
 
   const bottomPadding = Math.max(insets.bottom, 8);

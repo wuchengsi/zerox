@@ -21,6 +21,7 @@ import {ensureYearInCache} from '../../utils/availableYearsCache';
 import {goBack, replace} from '../../utils/navigationUtils';
 import {expenseAmountSchema, expenseSchema} from '../../utils/validationSchema';
 import {gs} from '../../styles/globalStyles';
+import {useLanguage} from '../../context/LanguageContext';
 
 interface IncomeEntryProps {
   type: 'Add' | 'Update';
@@ -29,6 +30,7 @@ interface IncomeEntryProps {
 
 const IncomeEntry: React.FC<IncomeEntryProps> = ({type, route}) => {
   const colors = useThemeColors();
+  const {t} = useLanguage();
   const dispatch = useDispatch<AppDispatch>();
   const userId = useSelector(selectUserId);
   const currencySymbol = useSelector(selectCurrencySymbol);
@@ -105,7 +107,7 @@ const IncomeEntry: React.FC<IncomeEntryProps> = ({type, route}) => {
     <PrimaryView colors={colors} style={gs.justifyBetween} dismissKeyboardOnTouch>
       <View>
         <View style={[gs.mb20, gs.mt20]}>
-          <AppHeader onPress={goBack} colors={colors} text={isAdd ? '新增收入' : '编辑收入'} />
+          <AppHeader onPress={goBack} colors={colors} text={isAdd ? t('新增收入') : t('编辑收入')} />
           {isAdd ? (
             <View style={[gs.row, gs.gap8, gs.mt15]}>
               <TouchableOpacity
@@ -113,12 +115,12 @@ const IncomeEntry: React.FC<IncomeEntryProps> = ({type, route}) => {
                 activeOpacity={0.7}
                 style={[gs.py8, gs.px14, gs.rounded12, {backgroundColor: colors.secondaryAccent}]}>
                 <PrimaryText size={13} color={colors.primaryText}>
-                  支出
+                  {t('支出')}
                 </PrimaryText>
               </TouchableOpacity>
               <View style={[gs.py8, gs.px14, gs.rounded12, {backgroundColor: colors.primaryText}]}>
                 <PrimaryText size={13} weight="semibold" color={colors.buttonText}>
-                  收入
+                  {t('收入')}
                 </PrimaryText>
               </View>
             </View>
@@ -129,12 +131,12 @@ const IncomeEntry: React.FC<IncomeEntryProps> = ({type, route}) => {
           colors={colors}
           input={title}
           setInput={setTitle}
-          placeholder="例如 工资"
-          label="标题"
+          placeholder={t('例如 工资')}
+          label={t('标题')}
           schema={expenseSchema}
         />
 
-        <PrimaryText size={12} color={colors.secondaryText} style={gs.mb5}>金额</PrimaryText>
+        <PrimaryText size={12} color={colors.secondaryText} style={gs.mb5}>{t('金额')}</PrimaryText>
         <View
           style={[
             gs.h48,
@@ -174,10 +176,10 @@ const IncomeEntry: React.FC<IncomeEntryProps> = ({type, route}) => {
           createdAt={createdAt}
           showDatePicker={showDatePicker}
           setCreatedAt={setCreatedAt}
-          label="日期"
+          label={t('日期')}
         />
 
-        <PrimaryText size={12} color={colors.secondaryText} style={gs.mb8}>分类</PrimaryText>
+        <PrimaryText size={12} color={colors.secondaryText} style={gs.mb8}>{t('分类')}</PrimaryText>
         <CategoryContainer
           categories={categories}
           colors={colors}
@@ -189,7 +191,7 @@ const IncomeEntry: React.FC<IncomeEntryProps> = ({type, route}) => {
       <PrimaryButton
         onPress={handleSubmit}
         colors={colors}
-        buttonTitle={isAdd ? '新增' : '更新'}
+        buttonTitle={isAdd ? t('新增') : t('更新')}
         disabled={!isValid}
       />
     </PrimaryView>

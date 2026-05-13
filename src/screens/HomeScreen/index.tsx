@@ -13,6 +13,7 @@ import {SheetManager} from 'react-native-actions-sheet';
 import {useDialog} from '../../context/DialogContext';
 import {getAiSettings, getMissingAiSettingsFields} from '../../services/aiSettingsService';
 import {gs, hitSlop} from '../../styles/globalStyles';
+import {useLanguage} from '../../context/LanguageContext';
 
 const HomeScreen = () => {
   const {
@@ -33,6 +34,7 @@ const HomeScreen = () => {
     handleMonthYearSelect,
   } = useHome();
   const {showAlert} = useDialog();
+  const {t} = useLanguage();
 
   const openMonthPicker = useCallback(() => {
     void SheetManager.show('month-year-picker-sheet', {
@@ -71,7 +73,7 @@ const HomeScreen = () => {
 
         <View style={[gs.rowCenter, gs.gap8, gs.mt4]}>
           <PrimaryText size={11} color={colors.buttonText} variant="number" style={{opacity: 0.7}}>
-            {transactionCount} 条账单
+            {transactionCount} {t('条账单')}
           </PrimaryText>
           {/* <PrimaryText size={11} color={colors.buttonText} style={{opacity: 0.7}}>·</PrimaryText>
           <PrimaryText size={11} color={colors.buttonText} variant="number" style={{opacity: 0.7}}>
@@ -97,8 +99,8 @@ const HomeScreen = () => {
     if (missingFields.length > 0) {
       await showAlert({
         type: 'warning',
-        message: `请先在设置中填写：${missingFields.join('、')}`,
-        okLabel: '去设置',
+        message: `${t('请先在设置中填写：')}${missingFields.join('、')}`,
+        okLabel: t('去设置'),
       });
       navigate('AiSettingsScreen');
       return;
@@ -111,7 +113,7 @@ const HomeScreen = () => {
     <>
       <PrimaryView colors={colors} useBottomPadding={false} useSidePadding={false}>
         <View style={[gs.px16, gs.mb15]}>
-          <HeaderContainer headerText={`你好，${userName}`} />
+          <HeaderContainer headerText={`${t('你好，')}${userName}`} />
         </View>
         <TransactionList
           currencySymbol={currencySymbol}
@@ -130,7 +132,7 @@ const HomeScreen = () => {
           style={[gs.size50, gs.rounded8, gs.center, {backgroundColor: colors.secondaryBackground}]}
           onPress={handleOpenAiQuickExpense}
           hitSlop={hitSlop}
-          accessibilityLabel="AI 快速记账"
+          accessibilityLabel={t('AI 快速记账')}
           accessibilityRole="button">
           <Icon name="sparkles" size={26} color={colors.primaryText} />
         </TouchableOpacity>
@@ -140,7 +142,7 @@ const HomeScreen = () => {
           style={[gs.size50, gs.rounded8, gs.center, {backgroundColor: colors.secondaryBackground}]}
           onPress={() => navigate('AddTransactionsScreen')}
           hitSlop={hitSlop}
-          accessibilityLabel="新增账单"
+          accessibilityLabel={t('新增账单')}
           accessibilityRole="button">
           <Icon name="plus-circle" size={30} color={colors.primaryText} />
         </TouchableOpacity>

@@ -1,0 +1,176 @@
+import StorageService from '../utils/asyncStorageService';
+
+export type LanguageCode = 'zh' | 'en';
+
+export const LANGUAGE_STORAGE_KEY = 'languagePreference';
+
+const SUPPORTED_LANGUAGES: LanguageCode[] = ['zh', 'en'];
+
+const en: Record<string, string> = {
+  首页: 'Home',
+  统计: 'Stats',
+  收入: 'Income',
+  债务: 'Debt',
+  分类: 'Categories',
+  设置: 'Settings',
+  '你好，': 'Hi, ',
+  条账单: 'records',
+  '请先在设置中填写：': 'Please configure in settings: ',
+  个性化: 'PERSONALIZATION',
+  'AI 快速记账': 'AI Quick Add',
+  'AI 快速记账设置': 'AI Quick Add Settings',
+  'AI 配置已保存': 'AI settings saved',
+  '确定要清空 AI 配置吗？': 'Clear AI settings?',
+  清空: 'Clear',
+  'AI 配置已清空': 'AI settings cleared',
+  '没有可撤销的 AI 自动添加记录': 'No AI auto-created records to undo',
+  '撤销上次 AI 自动添加': 'Undo last AI auto-add',
+  '保存配置': 'Save settings',
+  '清空配置': 'Clear settings',
+  隐私说明: 'Privacy note',
+  '请输入 API Key': 'Enter API Key',
+  'API Key 仅保存在本地 MMKV 中，不会写入 Redux、数据库、导入导出文件或日志；但它不是系统 Keychain / Keystore 级别的加密存储。':
+    'The API key is stored only in local MMKV. It is not written to Redux, the database, import/export files, or logs; however, it is not system Keychain/Keystore-level encrypted storage.',
+  '提交后进入后台队列，解析成功自动入账': 'Submitted items enter the background queue and are added automatically after parsing',
+  'AI 设置': 'AI Settings',
+  账单内容: 'Record text',
+  自动记账: 'Auto add',
+  'AI 处理队列': 'AI queue',
+  说明: 'Notes',
+  '提交后可继续录入下一条。队列会在后台顺序处理；失败记录可在队列详情中编辑后重新解析。':
+    'After submitting, you can enter the next item. The queue runs in order; failed records can be edited and retried in queue details.',
+  '请输入要自动记账的账单记录': 'Enter records to auto add',
+  正在后台处理: 'Processing in background',
+  等待处理: 'Waiting',
+  当前没有正在处理的队列: 'No active queue',
+  有: 'There are',
+  条解析失败: 'failed parses',
+  等待中: 'Waiting',
+  处理中: 'Processing',
+  已添加: 'Added',
+  失败: 'Failed',
+  暂无解析记录: 'No parse history yet',
+  队列处理中: 'Queue processing',
+  数据: 'DATA',
+  关于: 'ABOUT',
+  语言: 'Language',
+  中文: 'Chinese',
+  英语: 'English',
+  '深/浅模式': 'Appearance',
+  浅色: 'Light',
+  深色: 'Dark',
+  跟随系统: 'System',
+  主题色: 'Accent color',
+  选择语言: 'Choose language',
+  选择主题色: 'Choose accent color',
+  选择显示模式: 'Choose appearance',
+  应用: 'Apply',
+  跳过: 'Skip',
+  继续: 'Continue',
+  选择常用分类: 'Choose common categories',
+  选择你想记录的支出类型: 'Choose expense types you want to track',
+  主题: 'Theme',
+  昵称: 'Name',
+  货币: 'Currency',
+  'LLM API 配置': 'LLM API settings',
+  'OpenAI 兼容接口，本地保存 API Key': 'OpenAI-compatible API, API key stored locally',
+  导出数据: 'Export data',
+  稍后可在新设备导入: 'Import on a new device later',
+  删除所有数据: 'Delete all data',
+  此操作无法撤销: 'This action cannot be undone',
+  反馈问题: 'Report a bug',
+  '在 GitHub 提交 issue': 'Open a GitHub issue',
+  源代码: 'Source code',
+  '在 GitHub 查看': 'View on GitHub',
+  版本: 'Version',
+  '保持简单，清楚记账': 'Keep it simple. Track clearly.',
+  使用: 'Use',
+  管理日常支出: 'to manage daily expenses',
+  新增账单: 'Add expense',
+  编辑账单: 'Edit expense',
+  新增收入: 'Add income',
+  编辑收入: 'Edit income',
+  支出: 'Expense',
+  标题: 'Title',
+  金额: 'Amount',
+  日期: 'Date',
+  新增: 'Add',
+  更新: 'Update',
+  新增分类: 'Add category',
+  分类已删除: 'Category deleted',
+  个小类: 'subcategories',
+  '例如 午饭': 'e.g. Lunch',
+  '例如 工资': 'e.g. Salary',
+  分类名称: 'Category name',
+  支出分类: 'Expense category',
+  收入分类: 'Income category',
+  编辑分类: 'Edit category',
+  支出大类: 'Expense parent category',
+  的小类: 'subcategory',
+  外观: 'Appearance',
+  图标: 'Icon',
+  颜色: 'Color',
+  更换: 'Change',
+  选择: 'Select',
+  跟随大类: 'Follow parent',
+  '例如 地铁': 'e.g. Metro',
+  '例如 出行': 'e.g. Transport',
+  大类: 'Parent category',
+  小类: 'Subcategory',
+  记录已删除: 'Record deleted',
+  撤销: 'Undo',
+  总计: 'Total',
+  日均: 'Daily avg',
+  条收入: 'income records',
+  分类统计: 'Category stats',
+  还没有收入记录: 'No income records yet',
+  大类统计: 'Parent category stats',
+  小类占比: 'Subcategory share',
+  暂无账单: 'No records yet',
+  少: 'Less',
+  多: 'More',
+  今天: 'Today',
+  明天: 'Tomorrow',
+  昨天: 'Yesterday',
+  再按一次退出: 'Press again to exit',
+  '导出 Zerox 数据': 'Export Zerox Data',
+  上传你导出的: 'Upload your exported',
+  备份文件: 'backup file',
+  '密钥无效，请上传有效的 Zerox 导出文件。': 'Invalid key. Please upload a valid Zerox export file.',
+  '确定要删除所有数据吗？': 'Delete all data?',
+  删除: 'Delete',
+  取消: 'Cancel',
+  知道了: 'OK',
+  去设置: 'Go to settings',
+  '数据已成功导出到下载目录': 'Data exported to Downloads',
+  导出数据时出错: 'Error exporting data',
+  需要手动授予存储权限后才能下载数据: 'Storage permission is required to download data',
+  '自然语言内容会发送到你配置的 LLM 服务商。Zerox 只发送当前输入、当前时间和可用分类名称，不发送完整账本历史。':
+    'Natural language content is sent to your configured LLM provider. Zerox only sends the current input, current time, and available category names, not your full ledger history.',
+};
+
+export const normalizeLanguage = (value?: string | null): LanguageCode =>
+  SUPPORTED_LANGUAGES.includes(value as LanguageCode) ? (value as LanguageCode) : 'zh';
+
+export const getCurrentLanguage = (): LanguageCode =>
+  normalizeLanguage(StorageService.getItemSync(LANGUAGE_STORAGE_KEY));
+
+export const saveCurrentLanguage = (language: LanguageCode): void => {
+  StorageService.setItemSync(LANGUAGE_STORAGE_KEY, language);
+};
+
+export const translate = (
+  key: string,
+  language: LanguageCode = getCurrentLanguage(),
+  params?: Record<string, string | number>,
+): string => {
+  const template = language === 'en' ? en[key] ?? key : key;
+  if (!params) {
+    return template;
+  }
+
+  return Object.entries(params).reduce(
+    (text, [name, value]) => text.replace(new RegExp(`\\{${name}\\}`, 'g'), String(value)),
+    template,
+  );
+};

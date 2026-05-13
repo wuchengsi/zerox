@@ -9,7 +9,8 @@ import {
   getCategoryByName,
 } from '../../watermelondb/services';
 import {AppDispatch} from '../../redux/store';
-import {DEFAULT_EXPENSE_CATEGORIES} from '../../constants/defaultCategories';
+import {getDefaultExpenseCategories} from '../../constants/defaultCategories';
+import {useLanguage} from '../../context/LanguageContext';
 
 interface CategorySelection {
   name: string;
@@ -22,7 +23,9 @@ interface CategorySelection {
 
 const useOnboarding = () => {
   const colors = useThemeColors();
+  const {language, setLanguage, t} = useLanguage();
   const [selectedCategories, setSelectedCategories] = useState<Array<CategorySelection>>([]);
+  const defaultExpenseCategories = useMemo(() => getDefaultExpenseCategories(language), [language]);
 
   const selectedCategoryNames = useMemo(
     () => new Set(selectedCategories.map(c => `${c.parentName ?? ''}·${c.name}`)),
@@ -52,7 +55,7 @@ const useOnboarding = () => {
       const parentName = category.parentName ?? category.name;
       let parent = await getCategoryByName(userId, parentName, 'expense', null);
       if (!parent) {
-        const parentConfig = DEFAULT_EXPENSE_CATEGORIES.find(item => item.name === parentName);
+        const parentConfig = defaultExpenseCategories.find(item => item.name === parentName);
         const parentId = await createCategory(
           parentName,
           userId,
@@ -79,7 +82,7 @@ const useOnboarding = () => {
       await createCategory(category.name, userId, category.icon ?? null, category.color ?? null, 'expense', parent.id);
     }
     navigate('ChooseCurrencyScreen');
-  }, [selectedCategories, userId]);
+  }, [defaultExpenseCategories, selectedCategories, userId]);
 
   const toggleCategorySelection = useCallback(
     (category: CategorySelection) => {
@@ -104,6 +107,10 @@ const useOnboarding = () => {
 
   return {
     colors,
+    language,
+    setLanguage,
+    t,
+    defaultExpenseCategories,
     selectedCategories,
     setSelectedCategories,
     userId,

@@ -5,20 +5,19 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import localeData from 'dayjs/plugin/localeData';
 import 'dayjs/locale/zh-cn';
+import {getCurrentLanguage} from '../i18n';
 
 dayjs.extend(calendar);
 dayjs.extend(advancedFormat);
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 dayjs.extend(localeData);
-dayjs.locale('zh-cn');
+dayjs.locale(getCurrentLanguage() === 'en' ? 'en' : 'zh-cn');
 
-// Cache locale data - computed once at module load, not on every function call
-const MONTHS = dayjs.months();
-const MONTHS_SHORT = dayjs.monthsShort();
-const WEEKDAYS = dayjs.weekdays();
-const WEEKDAYS_SHORT = dayjs.weekdaysShort();
-const WEEKDAYS_MIN = dayjs.weekdaysMin();
+const getDayjsLocale = (): 'zh-cn' | 'en' =>
+  getCurrentLanguage() === 'en' ? 'en' : 'zh-cn';
+
+const withLocale = (date?: DateInput): Dayjs => parseDate(date).locale(getDayjsLocale());
 
 export type DateInput = string | number | Date | Dayjs | null | undefined;
 export type DateUnit =
@@ -40,38 +39,50 @@ export const formatDate = (
   date?: DateInput,
   format: string = 'YYYY-MM-DD',
 ): string => {
-  return parseDate(date).format(format);
+  return withLocale(date).format(format);
 };
 
 export const getCurrentYear = (): number => dayjs().year();
 
-export const getCurrentMonthName = (): string => dayjs().format('MMMM');
+export const getCurrentMonthName = (): string => dayjs().locale(getDayjsLocale()).format('MMMM');
 
 export const getYear = (date: DateInput): number => parseDate(date).year();
 
 export const getMonthName = (date: DateInput): string =>
-  parseDate(date).format('MMMM');
+  withLocale(date).format('MMMM');
 
 export const getDayOfMonth = (date: DateInput): number =>
   parseDate(date).date();
 
 export const getDayOfWeek = (date: DateInput): number => parseDate(date).day();
 
-// Use cached locale data - no array recreation on each call
-export const getMonthNames = (): string[] => MONTHS;
-export const getMonthNamesShort = (): string[] => MONTHS_SHORT;
-export const getWeekdayNames = (): string[] => WEEKDAYS;
-export const getWeekdayShortNames = (): string[] => WEEKDAYS_SHORT;
-export const getWeekdayNamesMin = (): string[] => WEEKDAYS_MIN;
+export const getMonthNames = (): string[] => dayjs().locale(getDayjsLocale()).localeData().months();
+export const getMonthNamesShort = (): string[] => dayjs().locale(getDayjsLocale()).localeData().monthsShort();
+export const getWeekdayNames = (): string[] => dayjs().locale(getDayjsLocale()).localeData().weekdays();
+export const getWeekdayShortNames = (): string[] => dayjs().locale(getDayjsLocale()).localeData().weekdaysShort();
+export const getWeekdayNamesMin = (): string[] => dayjs().locale(getDayjsLocale()).localeData().weekdaysMin();
 
 export const getDaysInMonth = (year: number, month: string): number => {
   const monthIndex = dayjs().month(getMonthIndex(month)).month();
   return dayjs().year(year).month(monthIndex).daysInMonth();
 };
 
-// Uses cached MONTHS array for O(N) lookup
 export const getMonthIndex = (monthName: string): number => {
-  return MONTHS.findIndex(m => m.toLowerCase() === monthName.toLowerCase());
+  const monthNames = getMonthNames();
+  const localizedIndex = monthNames.findIndex(m => m.toLowerCase() === monthName.toLowerCase());
+  if (localizedIndex >= 0) {
+    return localizedIndex;
+  }
+
+  const fallbackLocales: Array<'zh-cn' | 'en'> = ['zh-cn', 'en'];
+  for (const locale of fallbackLocales) {
+    const names = dayjs().locale(locale).localeData().months();
+    const index = names.findIndex(m => m.toLowerCase() === monthName.toLowerCase());
+    if (index >= 0) {
+      return index;
+    }
+  }
+  return new Date().getMonth();
 };
 
 export const getMonthNumber = (monthName: string): string => {
@@ -114,7 +125,19 @@ export const addToDate = (
 export const getYesterday = (): Dayjs => dayjs().subtract(1, 'day');
 
 export const formatCalendar = (date: DateInput): string => {
-  return parseDate(date).calendar(null, {
+  const language = getCurrentLanguage();
+  if (language === 'en') {
+    return withLocale(date).calendar(null, {
+      sameDay: '[Today]',
+      nextDay: '[Tomorrow]',
+      nextWeek: 'dddd',
+      lastDay: '[Yesterday]',
+      lastWeek: '[Last] dddd',
+      sameElse: 'MMM D, YYYY',
+    });
+  }
+
+  return withLocale(date).calendar(null, {
     sameDay: '[今天]',
     nextDay: '[明天]',
     nextWeek: 'dddd',

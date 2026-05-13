@@ -42,6 +42,10 @@ const useCategoryTransaction = (route: CategoryTransactionRouteProp) => {
     }, [dispatch, categoryId, yearMonth]),
   );
 
+  const refreshCategoryTransactions = useCallback(async () => {
+    await dispatch(fetchExpensesByCategory({categoryId, yearMonth}));
+  }, [dispatch, categoryId, yearMonth]);
+
   const totalAmount = useMemo(
     () => transactions.reduce((sum: number, t: Expense) => sum + t.amount, 0),
     [transactions],
@@ -58,6 +62,7 @@ const useCategoryTransaction = (route: CategoryTransactionRouteProp) => {
     monthLabel,
     categoryId,
     yearMonth,
+    refreshCategoryTransactions,
   };
 };
 

@@ -24,11 +24,11 @@ import {AppDispatch} from '../../redux/store';
 import {deleteExpenseById, deleteIncomeById, getExpenseById, getIncomeById} from '../../watermelondb/services';
 import {getMonthNames, getMonthNumber} from '../../utils/dateUtils';
 import {gs} from '../../styles/globalStyles';
-
-const MONTHS = getMonthNames();
+import {useLanguage} from '../../context/LanguageContext';
 
 const AiSettingsScreen = () => {
   const colors = useThemeColors();
+  const {t} = useLanguage();
   const {showAlert, showDialog} = useDialog();
   const dispatch = useDispatch<AppDispatch>();
   const selectedYear = useSelector(selectYear);
@@ -43,7 +43,7 @@ const AiSettingsScreen = () => {
   useEffect(() => subscribeAiLastAutoCreateBatch(setLastBatch), []);
 
   const currentYearMonth = useMemo(
-    () => `${selectedYear}-${getMonthNumber(MONTHS[selectedMonthIndex])}`,
+    () => `${selectedYear}-${getMonthNumber(getMonthNames()[selectedMonthIndex])}`,
     [selectedMonthIndex, selectedYear],
   );
 
@@ -51,17 +51,17 @@ const AiSettingsScreen = () => {
     saveAiSettings({apiBaseUrl, apiKey, modelName});
     await showAlert({
       type: 'success',
-      message: 'AI 配置已保存',
-      okLabel: '知道了',
+      message: t('AI 配置已保存'),
+      okLabel: t('知道了'),
     });
-  }, [apiBaseUrl, apiKey, modelName, showAlert]);
+  }, [apiBaseUrl, apiKey, modelName, showAlert, t]);
 
   const handleClear = useCallback(async () => {
     const confirmed = await showDialog({
       type: 'warning',
-      message: '确定要清空 AI 配置吗？',
-      okLabel: '清空',
-      cancelLabel: '取消',
+      message: t('确定要清空 AI 配置吗？'),
+      okLabel: t('清空'),
+      cancelLabel: t('取消'),
     });
 
     if (!confirmed) {
@@ -74,10 +74,10 @@ const AiSettingsScreen = () => {
     setModelName('');
     await showAlert({
       type: 'success',
-      message: 'AI 配置已清空',
-      okLabel: '知道了',
+      message: t('AI 配置已清空'),
+      okLabel: t('知道了'),
     });
-  }, [showAlert, showDialog]);
+  }, [showAlert, showDialog, t]);
 
   const handleUndoLastAutoCreate = useCallback(async () => {
     const batch = getAiLastAutoCreateBatch();
@@ -85,17 +85,17 @@ const AiSettingsScreen = () => {
     if (!batch || records.length === 0) {
       await showAlert({
         type: 'warning',
-        message: '没有可撤销的 AI 自动添加记录',
-        okLabel: '知道了',
+        message: t('没有可撤销的 AI 自动添加记录'),
+        okLabel: t('知道了'),
       });
       return;
     }
 
     const confirmed = await showDialog({
       type: 'warning',
-      message: `确定撤销上次 AI 自动添加的 ${batch.createdCount} 条账单吗？`,
-      okLabel: '撤销',
-      cancelLabel: '取消',
+      message: `${t('撤销上次 AI 自动添加')} ${batch.createdCount} ${t('条账单')}?`,
+      okLabel: t('撤销'),
+      cancelLabel: t('取消'),
     });
 
     if (!confirmed) {
@@ -133,15 +133,15 @@ const AiSettingsScreen = () => {
     ]);
     await showAlert({
       type: removedCount > 0 ? 'success' : 'warning',
-      message: `已撤销 ${removedCount} 条 AI 自动添加账单`,
-      okLabel: '知道了',
+      message: `${t('撤销')} ${removedCount} ${t('条账单')}`,
+      okLabel: t('知道了'),
     });
-  }, [currentYearMonth, dispatch, showAlert, showDialog]);
+  }, [currentYearMonth, dispatch, showAlert, showDialog, t]);
 
   return (
     <PrimaryView colors={colors} dismissKeyboardOnTouch>
       <View style={[gs.mb20, gs.mt20]}>
-        <AppHeader onPress={goBack} colors={colors} text="AI 快速记账设置" />
+        <AppHeader onPress={goBack} colors={colors} text={t('AI 快速记账设置')} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={gs.pb80}>
@@ -159,7 +159,7 @@ const AiSettingsScreen = () => {
           input={apiKey}
           setInput={setApiKey}
           label="API Key"
-          placeholder="请输入 API Key"
+          placeholder={t('请输入 API Key')}
           autoCapitalize="none"
           secureTextEntry={!showApiKey}
           rightIcon={showApiKey ? 'eye-off' : 'eye'}
@@ -178,28 +178,30 @@ const AiSettingsScreen = () => {
 
         <View style={[gs.rounded12, gs.p14, gs.mt10, gs.mb15, {backgroundColor: colors.containerColor}]}>
           <PrimaryText size={13} weight="semibold" style={gs.mb8}>
-            隐私说明
+            {t('隐私说明')}
           </PrimaryText>
           <PrimaryText size={12} color={colors.secondaryText} style={{lineHeight: 18}}>
-            自然语言内容会发送到你配置的 LLM 服务商。Zerox 只发送当前输入、当前时间和可用分类名称，不发送完整账本历史。
+            {t('自然语言内容会发送到你配置的 LLM 服务商。Zerox 只发送当前输入、当前时间和可用分类名称，不发送完整账本历史。')}
           </PrimaryText>
           <PrimaryText size={12} color={colors.secondaryText} style={[gs.mt8, {lineHeight: 18}]}>
-            API Key 仅保存在本地 MMKV 中，不会写入 Redux、数据库、导入导出文件或日志；但它不是系统 Keychain / Keystore 级别的加密存储。
+            {t('API Key 仅保存在本地 MMKV 中，不会写入 Redux、数据库、导入导出文件或日志；但它不是系统 Keychain / Keystore 级别的加密存储。')}
           </PrimaryText>
         </View>
 
         <View style={gs.gap10}>
-          <PrimaryButton onPress={handleSave} colors={colors} buttonTitle="保存配置" />
+          <PrimaryButton onPress={handleSave} colors={colors} buttonTitle={t('保存配置')} />
           <PrimaryButton
             onPress={handleUndoLastAutoCreate}
             colors={colors}
             buttonTitle={
-              lastBatch ? `撤销上次 AI 自动添加（${lastBatch.createdCount} 条）` : '撤销上次 AI 自动添加'
+              lastBatch
+                ? `${t('撤销上次 AI 自动添加')} (${lastBatch.createdCount})`
+                : t('撤销上次 AI 自动添加')
             }
             variant="outline"
             disabled={!lastBatch}
           />
-          <PrimaryButton onPress={handleClear} colors={colors} buttonTitle="清空配置" variant="outline" />
+          <PrimaryButton onPress={handleClear} colors={colors} buttonTitle={t('清空配置')} variant="outline" />
         </View>
       </ScrollView>
     </PrimaryView>

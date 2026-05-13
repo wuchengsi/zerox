@@ -13,19 +13,21 @@ import {
 import {formatDate} from '../../utils/dateUtils';
 import {goBack, navigate} from '../../utils/navigationUtils';
 import {gs} from '../../styles/globalStyles';
+import {translate} from '../../i18n';
+import {useLanguage} from '../../context/LanguageContext';
 
 const getStatusLabel = (task: AiAutoExpenseTask): string => {
   switch (task.status) {
     case 'queued':
-      return '等待中';
+      return translate('等待中');
     case 'running':
-      return '处理中';
+      return translate('处理中');
     case 'created':
-      return `已添加 ${task.createdCount ?? 0} 条`;
+      return `${translate('已添加')} ${task.createdCount ?? 0}`;
     case 'partial_failed':
-      return `已添加 ${task.createdCount ?? 0} 条，跳过 ${task.skippedCount ?? 0} 条`;
+      return `${translate('已添加')} ${task.createdCount ?? 0}, ${translate('跳过')} ${task.skippedCount ?? 0}`;
     case 'failed':
-      return '失败';
+      return translate('失败');
     default:
       return '';
   }
@@ -38,6 +40,7 @@ const getSummary = (input: string): string => {
 
 const AiExpenseQueueScreen = () => {
   const colors = useThemeColors();
+  const {t} = useLanguage();
   const [tasks, setTasks] = useState<AiAutoExpenseTask[]>(getAiAutoExpenseTasks());
   const [processingDotCount, setProcessingDotCount] = useState(1);
 
@@ -64,8 +67,8 @@ const AiExpenseQueueScreen = () => {
         <AppHeader
           onPress={goBack}
           colors={colors}
-          text="AI 处理队列"
-          subtitle={activeCount > 0 ? `队列处理中${'.'.repeat(processingDotCount)}` : '当前没有正在处理的队列'}
+          text={t('AI 处理队列')}
+          subtitle={activeCount > 0 ? `${t('队列处理中')}${'.'.repeat(processingDotCount)}` : t('当前没有正在处理的队列')}
         />
       </View>
 
@@ -73,7 +76,7 @@ const AiExpenseQueueScreen = () => {
         {tasks.length === 0 ? (
           <View style={[gs.center, gs.mt30]}>
             <PrimaryText size={13} color={colors.secondaryText}>
-              暂无解析记录
+              {t('暂无解析记录')}
             </PrimaryText>
           </View>
         ) : (
@@ -102,7 +105,7 @@ const AiExpenseQueueScreen = () => {
                         weight="semibold"
                         color={isFailed ? colors.accentRed : colors.primaryText}
                         style={isRunning ? gs.ml8 : undefined}>
-                        {isRunning ? `处理中${'.'.repeat(processingDotCount)}` : getStatusLabel(task)}
+                        {isRunning ? `${t('处理中')}${'.'.repeat(processingDotCount)}` : getStatusLabel(task)}
                       </PrimaryText>
                     </View>
                     <PrimaryText size={13} numberOfLines={2}>

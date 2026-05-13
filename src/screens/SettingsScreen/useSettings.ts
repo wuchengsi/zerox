@@ -9,7 +9,7 @@ import {
 } from '../../redux/slice/currencyDataSlice';
 import {useCallback, useEffect} from 'react';
 import {getAppVersion} from '../../utils/getVersion';
-import {useTheme, ThemeMode} from '../../context/ThemeContext';
+import {AccentColorId, ThemeMode, useLanguage, useTheme} from '../../context';
 import {useDialog} from '../../context/DialogContext';
 import StorageService from '../../utils/asyncStorageService';
 import {updateUserById, updateCurrencyById, deleteAllData} from '../../watermelondb/services';
@@ -26,7 +26,8 @@ const useSettings = () => {
   const currencySymbol = useSelector(selectCurrencySymbol);
   const allData = useSelector(selectAllData);
 
-  const {colors, themeMode, setThemeMode} = useTheme();
+  const {colors, themeMode, setThemeMode, accentColorId, setAccentColor} = useTheme();
+  const {language, setLanguage, t} = useLanguage();
   const {showDialog, showAlert} = useDialog();
   const appVersion = getAppVersion();
 
@@ -45,6 +46,14 @@ const useSettings = () => {
       }
     }
   }, [setThemeMode]);
+
+  const handleLanguageSelection = useCallback(async (nextLanguage: string) => {
+    await setLanguage(nextLanguage === 'en' ? 'en' : 'zh');
+  }, [setLanguage]);
+
+  const handleAccentColorSelection = useCallback(async (color: AccentColorId) => {
+    await setAccentColor(color);
+  }, [setAccentColor]);
 
   const handleNameUpdate = useCallback(async (newName: string) => {
     try {
@@ -102,55 +111,59 @@ const useSettings = () => {
   const handleDeleteAllData = useCallback(async () => {
     const confirmed = await showDialog({
       type: 'warning',
-      message: '确定要删除所有数据吗？',
-      okLabel: '删除',
-      cancelLabel: '取消',
+      message: t('确定要删除所有数据吗？'),
+      okLabel: t('删除'),
+      cancelLabel: t('取消'),
     });
     if (confirmed) {
       await deleteAllData();
       StorageService.setItemSync('isOnboarded', JSON.stringify(false));
       dispatch(setIsOnboarded(false));
     }
-  }, [dispatch, showDialog]);
+  }, [dispatch, showDialog, t]);
 
   const handleExportResult = useCallback(
     async (success: boolean) => {
       if (success) {
         await showAlert({
           type: 'success',
-          message: '数据已成功导出到下载目录',
-          okLabel: '知道了',
+          message: t('数据已成功导出到下载目录'),
+          okLabel: t('知道了'),
         });
       } else {
         await showAlert({
           type: 'error',
-          message: '导出数据时出错',
-          okLabel: '知道了',
+          message: t('导出数据时出错'),
+          okLabel: t('知道了'),
         });
       }
     },
-    [showAlert],
+    [showAlert, t],
   );
 
   const requestStorageViaDialog = useCallback(async () => {
     const confirmed = await showDialog({
       type: 'warning',
-      message: '需要手动授予存储权限后才能下载数据',
-      okLabel: '去设置',
-      cancelLabel: '取消',
+      message: t('需要手动授予存储权限后才能下载数据'),
+      okLabel: t('去设置'),
+      cancelLabel: t('取消'),
     });
     if (confirmed) {
       Linking.openSettings();
     }
-  }, [showDialog]);
+  }, [showDialog, t]);
 
   return {
     appVersion,
     colors,
     handleThemeSelection,
+    handleLanguageSelection,
+    handleAccentColorSelection,
     handleNameUpdate,
     handleCurrencyUpdate,
     selectedTheme: themeMode,
+    selectedLanguage: language,
+    selectedAccentColor: accentColorId,
     userName,
     currencySymbol,
     currencyName,
@@ -160,6 +173,7 @@ const useSettings = () => {
     allData,
     handleExportResult,
     requestStorageViaDialog,
+    t,
   };
 };
 

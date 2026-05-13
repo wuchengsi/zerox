@@ -4,10 +4,11 @@ import {database} from '../database';
 import Category from '../models/Category';
 import {sanitizeString, DEFAULTS} from '../../backend/sanitize';
 import {
-  DEFAULT_EXPENSE_CATEGORIES,
-  DEFAULT_INCOME_CATEGORIES,
+  getDefaultExpenseCategories,
+  getDefaultIncomeCategories,
 } from '../../constants/defaultCategories';
 import type {CategoryKind} from '../../constants/defaultCategories';
+import {getCurrentLanguage} from '../../i18n';
 
 // Type for category data - all properties initialized for Hidden Class optimization
 export interface CategoryData {
@@ -316,6 +317,9 @@ export const ensureDefaultCategoriesForUser = async (
     ]),
   );
   const preparedCategories: Category[] = [];
+  const language = getCurrentLanguage();
+  const defaultExpenseCategories = getDefaultExpenseCategories(language);
+  const defaultIncomeCategories = getDefaultIncomeCategories(language);
 
   const prepareCategory = (
     name: string,
@@ -339,7 +343,7 @@ export const ensureDefaultCategoriesForUser = async (
     return {id, color: sanitizeString(color, DEFAULTS.color)};
   };
 
-  for (const group of DEFAULT_EXPENSE_CATEGORIES) {
+  for (const group of defaultExpenseCategories) {
     let parent = byKey.get(`expense::${group.name}`);
     if (!parent) {
       parent = prepareCategory(group.name, group.icon, group.color, 'expense', null);
@@ -355,7 +359,7 @@ export const ensureDefaultCategoriesForUser = async (
     }
   }
 
-  for (const category of DEFAULT_INCOME_CATEGORIES) {
+  for (const category of defaultIncomeCategories) {
     const key = `income::${category.name}`;
     if (!byKey.has(key)) {
       const incomeCategory = prepareCategory(category.name, category.icon, category.color, 'income', null);

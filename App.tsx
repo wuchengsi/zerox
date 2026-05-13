@@ -10,6 +10,7 @@ import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {ThemeProvider} from './src/context/ThemeContext';
 import {DialogProvider} from './src/context/DialogContext';
+import {LanguageProvider} from './src/context/LanguageContext';
 import {SheetProvider} from 'react-native-actions-sheet';
 import ErrorBoundary from './src/components/atoms/ErrorBoundary';
 import AiAutoExpenseRecovery from './src/components/atoms/AiAutoExpenseRecovery';
@@ -30,16 +31,18 @@ const App = () => {
         <SafeAreaProvider>
           <Provider store={store}>
             <PersistGate loading={null} persistor={persistor}>
-              <ThemeProvider>
-                <DialogProvider>
-                  <SheetProvider>
-                    <AiAutoExpenseRecovery />
-                    <NavigationContainer ref={setNavigationRef}>
-                      <MainStack />
-                    </NavigationContainer>
-                  </SheetProvider>
-                </DialogProvider>
-              </ThemeProvider>
+              <LanguageProvider>
+                <ThemeProvider>
+                  <DialogProvider>
+                    <SheetProvider>
+                      <AiAutoExpenseRecovery />
+                      <NavigationContainer ref={setNavigationRef}>
+                        <MainStack />
+                      </NavigationContainer>
+                    </SheetProvider>
+                  </DialogProvider>
+                </ThemeProvider>
+              </LanguageProvider>
             </PersistGate>
           </Provider>
         </SafeAreaProvider>

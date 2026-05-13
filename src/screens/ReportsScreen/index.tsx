@@ -14,8 +14,10 @@ import {formatCurrency} from '../../utils/numberUtils';
 import {SheetManager} from 'react-native-actions-sheet';
 import Icon from '../../components/atoms/Icons';
 import {gs} from '../../styles/globalStyles';
+import {useLanguage} from '../../context/LanguageContext';
 
 const ReportsScreen = () => {
+  const {t} = useLanguage();
   const {
     colors,
     selectedYear,
@@ -228,7 +230,7 @@ const ReportsScreen = () => {
 
   return (
     <PrimaryView colors={colors} useBottomPadding={false}>
-      <HeaderContainer headerText={'统计'} />
+      <HeaderContainer headerText={t('统计')} />
       <View style={[gs.row, gs.wFull, gs.justifyBetween, gs.gap6, gs.mt10]}>
         <TouchableOpacity
           onPress={openMonthPicker}
@@ -240,13 +242,13 @@ const ReportsScreen = () => {
           <Icon name="chevron-down" size={14} color={colors.buttonText} />
         </TouchableOpacity>
         <View style={[gs.flex1, gs.px12, gs.py10, gs.rounded8, {backgroundColor: colors.secondaryAccent}]}>
-          <PrimaryText size={11} color={colors.secondaryText}>总计</PrimaryText>
+          <PrimaryText size={11} color={colors.secondaryText}>{t('总计')}</PrimaryText>
           <PrimaryText size={14} weight="semibold" variant="number" numberOfLines={1}>
             {currencySymbol}{formatCurrency(totalAmountForMonth)}
           </PrimaryText>
         </View>
         <View style={[gs.flex1, gs.px12, gs.py10, gs.rounded8, {backgroundColor: colors.secondaryAccent}]}>
-          <PrimaryText size={11} color={colors.secondaryText}>日均</PrimaryText>
+          <PrimaryText size={11} color={colors.secondaryText}>{t('日均')}</PrimaryText>
           <PrimaryText size={14} weight="semibold" variant="number" numberOfLines={1}>
             {currencySymbol}{formatCurrency(totalAmountForMonth / daysInMonth)}
           </PrimaryText>
@@ -268,7 +270,7 @@ const ReportsScreen = () => {
             <View style={[gs.row, gs.wrap]}>{renderCalendar()}</View>
 
             <View style={[gs.rowCenter, gs.justifyCenter, gs.mt10, gs.mb10, gs.gap4]}>
-              <PrimaryText size={11} color={colors.secondaryText}>少</PrimaryText>
+              <PrimaryText size={11} color={colors.secondaryText}>{t('少')}</PrimaryText>
               {[0.1, 0.3, 0.5, 0.75, 1].map((opacity, i) => (
                 <View
                   key={`legend-${i}`}
@@ -280,12 +282,12 @@ const ReportsScreen = () => {
                   ]}
                 />
               ))}
-              <PrimaryText size={11} color={colors.secondaryText}>多</PrimaryText>
+              <PrimaryText size={11} color={colors.secondaryText}>{t('多')}</PrimaryText>
             </View>
 
             <View style={[gs.mt20, gs.mb20]}>
               <PrimaryText size={13} weight="semibold" style={gs.mb10}>
-                大类统计
+                {t('大类统计')}
               </PrimaryText>
               {renderPieChart()}
             </View>

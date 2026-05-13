@@ -9,9 +9,6 @@ import {
   getMonthNames,
 } from '../../utils/dateUtils';
 
-const DAY_NAMES = getWeekdayShortNames();
-const MONTHS = getMonthNames();
-
 import {fetchExpensesByMonth, selectExpenseData} from '../../redux/slice/expenseDataSlice';
 import {selectMonthIndex, selectYear, setMonthSelection} from '../../redux/slice/monthSelectionSlice';
 import {selectCurrencySymbol} from '../../redux/slice/currencyDataSlice';
@@ -37,7 +34,9 @@ const useReports = () => {
 
   const selectedMonthIndex = useSelector(selectMonthIndex);
   const selectedYear = useSelector(selectYear);
-  const selectedMonth = MONTHS[selectedMonthIndex];
+  const months = getMonthNames();
+  const dayNames = getWeekdayShortNames();
+  const selectedMonth = months[selectedMonthIndex];
 
   const filteredTransactions = (useSelector(selectExpenseData) ?? []) as TransactionWithCategory[];
   const currencySymbol = useSelector(selectCurrencySymbol);
@@ -68,12 +67,12 @@ const useReports = () => {
 
   const handleMonthSelect = useCallback(
     (month: string) => {
-      const monthIdx = MONTHS.indexOf(month);
+      const monthIdx = months.indexOf(month);
       if (monthIdx >= 0) {
         dispatch(setMonthSelection({monthIndex: monthIdx, year: selectedYear}));
       }
     },
-    [dispatch, selectedYear],
+    [dispatch, months, selectedYear],
   );
 
   const totalAmountForMonth = useMemo(
@@ -89,7 +88,7 @@ const useReports = () => {
     selectedMonth,
     filteredTransactions,
     currencySymbol,
-    dayNames: DAY_NAMES,
+    dayNames,
     availableYears,
     handleMonthYearSelect,
     handleMonthSelect,

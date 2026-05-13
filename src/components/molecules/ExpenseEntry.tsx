@@ -22,6 +22,7 @@ import {expenseAmountSchema, expenseSchema} from '../../utils/validationSchema';
 import {CategoryData as CategoryDocType} from '../../watermelondb/services';
 import {AppDispatch} from '../../redux/store';
 import {gs} from '../../styles/globalStyles';
+import {useLanguage} from '../../context/LanguageContext';
 
 interface ExpenseEntryProps {
   type: string;
@@ -72,6 +73,7 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
   const dispatch = useDispatch<AppDispatch>();
 
   const colors = useThemeColors();
+  const {t} = useLanguage();
 
   useEffect(() => {
     dispatch(fetchCategories());
@@ -158,13 +160,13 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
           <AppHeader
             onPress={() => goBack()}
             colors={colors}
-            text={isAddButton ? '新增账单' : '编辑账单'}
+            text={isAddButton ? t('新增账单') : t('编辑账单')}
             rightAction={
               isAddButton ? (
                 <TouchableOpacity
                   onPress={() => navigate('AiQuickExpenseScreen')}
                   hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
-                  accessibilityLabel="AI 快速记账"
+                  accessibilityLabel={t('AI 快速记账')}
                   accessibilityRole="button">
                   <Icon name="sparkles" size={20} color={colors.primaryText} />
                 </TouchableOpacity>
@@ -175,7 +177,7 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
             <View style={[gs.row, gs.gap8, gs.mt15]}>
               <View style={[gs.py8, gs.px14, gs.rounded12, {backgroundColor: colors.primaryText}]}>
                 <PrimaryText size={13} weight="semibold" color={colors.buttonText}>
-                  支出
+                  {t('支出')}
                 </PrimaryText>
               </View>
               <TouchableOpacity
@@ -183,7 +185,7 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
                 activeOpacity={0.7}
                 style={[gs.py8, gs.px14, gs.rounded12, {backgroundColor: colors.secondaryAccent}]}>
                 <PrimaryText size={13} color={colors.primaryText}>
-                  收入
+                  {t('收入')}
                 </PrimaryText>
               </TouchableOpacity>
             </View>
@@ -194,11 +196,11 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
         colors={colors}
         input={expenseTitle}
         setInput={setExpenseTitle}
-        placeholder="例如 午饭"
-        label="标题"
+        placeholder={t('例如 午饭')}
+        label={t('标题')}
         schema={expenseSchema}
       />
-      <PrimaryText size={12} color={colors.secondaryText} style={gs.mb5}>金额</PrimaryText>
+      <PrimaryText size={12} color={colors.secondaryText} style={gs.mb5}>{t('金额')}</PrimaryText>
       <View
         style={[
           gs.h48,
@@ -240,10 +242,10 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
         createdAt={createdAt}
         showDatePicker={showDatePicker}
         setCreatedAt={setCreatedAt}
-        label="日期"
+        label={t('日期')}
       />
 
-      <PrimaryText size={12} color={colors.secondaryText} style={gs.mb8}>分类</PrimaryText>
+      <PrimaryText size={12} color={colors.secondaryText} style={gs.mb8}>{t('分类')}</PrimaryText>
       <ScrollView showsVerticalScrollIndicator={false}>
         <ExpenseCategoryAccordion
           groups={categoryGroups}
@@ -254,7 +256,7 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
         <PrimaryButton
           onPress={handleAddCategory}
           colors={colors}
-          buttonTitle="新增分类"
+          buttonTitle={t('新增分类')}
           variant="ghost"
           size="sm"
           fullWidth={false}
@@ -264,7 +266,7 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
         <PrimaryButton
           onPress={isAddButton ? handleAddExpense : handleUpdateExpense}
           colors={colors}
-          buttonTitle={isAddButton ? '新增' : '更新'}
+          buttonTitle={isAddButton ? t('新增') : t('更新')}
           disabled={!isValid}
         />
       </View>

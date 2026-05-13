@@ -8,20 +8,23 @@ import {formatDate, formatCalendar} from '../../utils/dateUtils';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import {navigate} from '../../utils/navigationUtils';
 import {
+  createExpense,
+  createIncome,
   deleteExpenseById,
   deleteIncomeById,
   ExpenseData as ExpenseDocType,
   IncomeData as IncomeDocType,
 } from '../../watermelondb/services';
 import {useDispatch} from 'react-redux';
-import {fetchExpenses, fetchExpensesByMonth, invalidateExpenseCache} from '../../redux/slice/expenseDataSlice';
-import {fetchIncomesByMonth, invalidateIncomeCache} from '../../redux/slice/incomeDataSlice';
+import {expenseRemoved, fetchExpenses, fetchExpensesByMonth, invalidateExpenseCache} from '../../redux/slice/expenseDataSlice';
+import {fetchIncomesByMonth, incomeRemoved, invalidateIncomeCache} from '../../redux/slice/incomeDataSlice';
 import PrimaryText from '../atoms/PrimaryText';
-import {fetchEverydayExpenses} from '../../redux/slice/everydayExpenseDataSlice';
+import {everydayExpenseRemoved, fetchEverydayExpenses} from '../../redux/slice/everydayExpenseDataSlice';
 import {formatCurrency} from '../../utils/numberUtils';
 import {FlashList} from '@shopify/flash-list';
 import {AppDispatch} from '../../redux/store';
 import {gs} from '../../styles/globalStyles';
+import {useLanguage} from '../../context/LanguageContext';
 
 interface CategoryInfo {
   id?: string;
@@ -59,6 +62,7 @@ interface TransactionListProps {
   refreshing?: boolean;
   onRefresh?: () => void;
   contentContainerStyle?: {paddingBottom?: number};
+  onTransactionChanged?: () => void | Promise<void>;
 }
 
 interface ExpenseRowProps {
@@ -73,7 +77,8 @@ interface ExpenseRowProps {
 
 type TransactionListItem =
   | {itemType: 'header'; id: string; label: string}
-  | {itemType: 'transaction'; id: string; transaction: Transaction};
+  | {itemType: 'transaction'; id: string; transaction: Transaction}
+  | {itemType: 'pendingDelete'; id: string; transaction: Transaction};
 
 const ACTION_WIDTH = 50;
 const EDGE_INSET = 16;
@@ -223,7 +228,9 @@ const InlineUndo: React.FC<{
   colors: Colors;
   onUndo: () => void;
   edgeToEdge: boolean;
-}> = memo(({colors, onUndo, edgeToEdge}) => (
+  deletedLabel: string;
+  undoLabel: string;
+}> = memo(({colors, onUndo, edgeToEdge, deletedLabel, undoLabel}) => (
   <View style={gs.mb5}>
     <View
       style={[
@@ -235,14 +242,14 @@ const InlineUndo: React.FC<{
         {backgroundColor: colors.secondaryAccent},
       ]}>
       <PrimaryText size={13} color={colors.secondaryText}>
-        记录已删除
+        {deletedLabel}
       </PrimaryText>
       <TouchableOpacity
         onPress={onUndo}
         activeOpacity={0.7}
         style={[gs.py8, gs.px14, gs.rounded10, {backgroundColor: colors.accentGreen}]}>
         <PrimaryText size={12} weight="semibold" color={colors.buttonText}>
-          撤销
+          {undoLabel}
         </PrimaryText>
       </TouchableOpacity>
     </View>
@@ -260,12 +267,14 @@ const TransactionList: React.FC<TransactionListProps> = ({
   refreshing,
   onRefresh,
   contentContainerStyle,
+  onTransactionChanged,
 }) => {
   const colors = useThemeColors();
+  const {t} = useLanguage();
   const dispatch = useDispatch<AppDispatch>();
   const openSwipeableRef = useRef<{close: () => void} | null>(null);
   const deletionTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-  const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<string>>(() => new Set());
+  const [pendingDeletes, setPendingDeletes] = useState<Map<string, Transaction>>(() => new Map());
   const listScopeKey = targetMonth ?? targetDate ?? 'all-transactions';
 
   useEffect(
@@ -278,11 +287,23 @@ const TransactionList: React.FC<TransactionListProps> = ({
 
   const listData: TransactionListItem[] = useMemo(() => {
     const groupedExpenses = new Map<string, Array<Transaction>>();
+    const pendingKeys = new Set(pendingDeletes.keys());
 
     allExpenses?.forEach(expense => {
+      const deleteKey = `${expense.transactionType ?? 'expense'}-${String(expense.id)}`;
+      if (pendingKeys.has(deleteKey)) {
+        return;
+      }
       const date = formatDate(expense.date, 'YYYY-MM-DD');
       const currentGroup = groupedExpenses.get(date) ?? [];
       currentGroup.push(expense);
+      groupedExpenses.set(date, currentGroup);
+    });
+
+    pendingDeletes.forEach(transaction => {
+      const date = formatDate(transaction.date, 'YYYY-MM-DD');
+      const currentGroup = groupedExpenses.get(date) ?? [];
+      currentGroup.push(transaction);
       groupedExpenses.set(date, currentGroup);
     });
 
@@ -296,14 +317,17 @@ const TransactionList: React.FC<TransactionListProps> = ({
       );
       return [
         {itemType: 'header' as const, id: `header-${date}`, label: formatCalendar(date)},
-        ...transactions.map(transaction => ({
-          itemType: 'transaction' as const,
-          id: `${transaction.transactionType ?? 'expense'}-${String(transaction.id)}`,
-          transaction,
-        })),
+        ...transactions.map(transaction => {
+          const id = `${transaction.transactionType ?? 'expense'}-${String(transaction.id)}`;
+          return {
+            itemType: pendingDeletes.has(id) ? 'pendingDelete' as const : 'transaction' as const,
+            id,
+            transaction,
+          };
+        }),
       ];
     });
-  }, [allExpenses]);
+  }, [allExpenses, pendingDeletes]);
 
   const handleEdit = useCallback((expense: Transaction) => {
     if (expense.transactionType === 'income') {
@@ -326,67 +350,131 @@ const TransactionList: React.FC<TransactionListProps> = ({
     });
   }, []);
 
-  const removePendingDeleteId = useCallback((deleteKey: string) => {
-    setPendingDeleteIds(prev => {
+  const refreshTransactionSources = useCallback(async () => {
+    await onTransactionChanged?.();
+  }, [onTransactionChanged]);
+
+  const refreshDefaultSources = useCallback(
+    async (transaction: Transaction) => {
+      if (transaction.transactionType === 'income') {
+        dispatch(invalidateIncomeCache());
+        if (targetMonth) {
+          await dispatch(fetchIncomesByMonth(targetMonth));
+        }
+        return;
+      }
+
+      dispatch(invalidateExpenseCache());
+      if (targetMonth) {
+        await dispatch(fetchExpensesByMonth(targetMonth));
+      } else {
+        await dispatch(fetchExpenses());
+      }
+      if (targetDate) {
+        await dispatch(fetchEverydayExpenses(targetDate));
+      }
+    },
+    [dispatch, targetDate, targetMonth],
+  );
+
+  const refreshAfterChange = useCallback(
+    async (transaction: Transaction) => {
+      await refreshDefaultSources(transaction);
+      await refreshTransactionSources();
+    },
+    [refreshDefaultSources, refreshTransactionSources],
+  );
+
+  const removePendingDelete = useCallback((deleteKey: string) => {
+    setPendingDeletes(prev => {
       if (!prev.has(deleteKey)) {
         return prev;
       }
-      const next = new Set(prev);
+      const next = new Map(prev);
       next.delete(deleteKey);
       return next;
     });
   }, []);
 
   const handleDelete = useCallback(
-    (expense: Transaction) => {
+    async (expense: Transaction) => {
       const expenseId = String(expense.id);
       const deleteKey = `${expense.transactionType ?? 'expense'}-${expenseId}`;
-      setPendingDeleteIds(prev => new Set(prev).add(deleteKey));
+      setPendingDeletes(prev => new Map(prev).set(deleteKey, expense));
 
       const existingTimeout = deletionTimeoutsRef.current.get(deleteKey);
       if (existingTimeout) {
         clearTimeout(existingTimeout);
       }
 
-      const timeout = setTimeout(async () => {
-        deletionTimeoutsRef.current.delete(deleteKey);
-        removePendingDeleteId(deleteKey);
+      try {
         if (expense.transactionType === 'income') {
           await deleteIncomeById(expenseId);
-          dispatch(invalidateIncomeCache());
-          if (targetMonth) {
-            dispatch(fetchIncomesByMonth(targetMonth));
-          }
-          return;
-        }
-
-        await deleteExpenseById(expenseId);
-        dispatch(invalidateExpenseCache());
-        if (targetMonth) {
-          dispatch(fetchExpensesByMonth(targetMonth));
+          dispatch(incomeRemoved(expenseId));
         } else {
-          dispatch(fetchExpenses());
+          await deleteExpenseById(expenseId);
+          dispatch(expenseRemoved(expenseId));
+          dispatch(everydayExpenseRemoved(expenseId));
         }
-        if (targetDate) {
-          dispatch(fetchEverydayExpenses(targetDate));
+        await refreshAfterChange(expense);
+      } catch (error) {
+        removePendingDelete(deleteKey);
+        if (__DEV__) {
+          console.error('Error deleting transaction:', error);
         }
+        return;
+      }
+
+      const timeout = setTimeout(async () => {
+        deletionTimeoutsRef.current.delete(deleteKey);
+        removePendingDelete(deleteKey);
       }, 3000);
 
       deletionTimeoutsRef.current.set(deleteKey, timeout);
     },
-    [dispatch, removePendingDeleteId, targetDate, targetMonth],
+    [dispatch, refreshAfterChange, removePendingDelete],
   );
 
   const handleUndo = useCallback(
-    (deleteKey: string) => {
+    async (deleteKey: string) => {
       const timeout = deletionTimeoutsRef.current.get(deleteKey);
       if (timeout) {
         clearTimeout(timeout);
         deletionTimeoutsRef.current.delete(deleteKey);
       }
-      removePendingDeleteId(deleteKey);
+      const transaction = pendingDeletes.get(deleteKey);
+      if (!transaction) {
+        removePendingDelete(deleteKey);
+        return;
+      }
+
+      try {
+        if (transaction.transactionType === 'income') {
+          await createIncome(
+            transaction.userId,
+            transaction.title,
+            transaction.amount,
+            transaction.categoryId,
+            transaction.date,
+          );
+        } else {
+          await createExpense(
+            transaction.userId,
+            transaction.title,
+            transaction.amount,
+            transaction.categoryId,
+            transaction.date,
+          );
+        }
+        removePendingDelete(deleteKey);
+        await refreshAfterChange(transaction);
+      } catch (error) {
+        if (__DEV__) {
+          console.error('Error restoring transaction:', error);
+        }
+      }
     },
-    [removePendingDeleteId],
+    [pendingDeletes, refreshAfterChange, removePendingDelete],
   );
 
   const renderItem = useCallback(
@@ -399,8 +487,16 @@ const TransactionList: React.FC<TransactionListProps> = ({
         );
       }
 
-      if (pendingDeleteIds.has(item.id)) {
-        return <InlineUndo colors={colors} onUndo={() => handleUndo(item.id)} edgeToEdge={edgeToEdge} />;
+      if (item.itemType === 'pendingDelete') {
+        return (
+          <InlineUndo
+            colors={colors}
+            onUndo={() => handleUndo(item.id)}
+            edgeToEdge={edgeToEdge}
+            deletedLabel={t('记录已删除')}
+            undoLabel={t('撤销')}
+          />
+        );
       }
 
       return (
@@ -415,7 +511,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
         />
       );
     },
-    [colors, currencySymbol, edgeToEdge, handleDelete, handleEdit, handleUndo, pendingDeleteIds],
+    [colors, currencySymbol, edgeToEdge, handleDelete, handleEdit, handleUndo, t],
   );
 
   const refreshControl = useMemo(
@@ -432,7 +528,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
       data={listData}
       renderItem={renderItem}
       keyExtractor={item => item.id}
-      extraData={pendingDeleteIds}
+      extraData={pendingDeletes}
       getItemType={item => item.itemType}
       ListHeaderComponent={ListHeaderComponent}
       ListEmptyComponent={ListEmptyComponent}

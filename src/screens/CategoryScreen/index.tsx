@@ -13,6 +13,7 @@ import type {CategoryData as Category, ExpenseCategoryGroup} from '../../waterme
 import EmptyState from '../../components/atoms/EmptyState';
 import type {Colors} from '../../hooks/useThemeColors';
 import {gs, hitSlop} from '../../styles/globalStyles';
+import {useLanguage} from '../../context/LanguageContext';
 
 const Segment = ({
   active,
@@ -118,9 +119,13 @@ const CategoryDeleteAction = ({
 const InlineUndo = memo(({
   colors,
   onUndo,
+  deletedLabel,
+  undoLabel,
 }: {
   colors: Colors;
   onUndo: () => void;
+  deletedLabel: string;
+  undoLabel: string;
 }) => (
   <View style={gs.mb6}>
     <View
@@ -132,14 +137,14 @@ const InlineUndo = memo(({
         {backgroundColor: colors.secondaryAccent},
       ]}>
       <PrimaryText size={13} color={colors.secondaryText}>
-        分类已删除
+        {deletedLabel}
       </PrimaryText>
       <TouchableOpacity
         onPress={onUndo}
         activeOpacity={0.7}
         style={[gs.py8, gs.px14, gs.rounded10, {backgroundColor: colors.accentGreen}]}>
         <PrimaryText size={12} weight="semibold" color={colors.buttonText}>
-          撤销
+          {undoLabel}
         </PrimaryText>
       </TouchableOpacity>
     </View>
@@ -149,6 +154,7 @@ const InlineUndo = memo(({
 const DELETE_DELAY_MS = 3000;
 
 const CategoryScreen = () => {
+  const {t} = useLanguage();
   const {
     colors,
     refreshing,
@@ -217,9 +223,14 @@ const CategoryScreen = () => {
 
   const renderPendingDelete = useCallback(
     (categoryId: string) => (
-      <InlineUndo colors={colors} onUndo={() => handleUndoDelete(categoryId)} />
+      <InlineUndo
+        colors={colors}
+        onUndo={() => handleUndoDelete(categoryId)}
+        deletedLabel={t('分类已删除')}
+        undoLabel={t('撤销')}
+      />
     ),
-    [colors, handleUndoDelete],
+    [colors, handleUndoDelete, t],
   );
 
   const editCategory = useCallback(
@@ -298,7 +309,7 @@ const CategoryScreen = () => {
                     {group.name}
                   </PrimaryText>
                   <PrimaryText size={11} variant="number" color={colors.secondaryText}>
-                    {group.children.length} 个小类
+                    {group.children.length} {t('个小类')}
                   </PrimaryText>
                 </View>
               </TouchableOpacity>
@@ -360,10 +371,10 @@ const CategoryScreen = () => {
     <>
       <PrimaryView colors={colors} useSidePadding={false} useBottomPadding={false}>
         <View style={[gs.mb15, gs.px16]}>
-          <HeaderContainer headerText={'分类'} />
+          <HeaderContainer headerText={t('分类')} />
           <View style={[gs.row, gs.gap8, gs.mt10]}>
-            <Segment active={tab === 'expense'} label="支出" onPress={() => setTab('expense')} colors={colors} />
-            <Segment active={tab === 'income'} label="收入" onPress={() => setTab('income')} colors={colors} />
+            <Segment active={tab === 'expense'} label={t('支出')} onPress={() => setTab('expense')} colors={colors} />
+            <Segment active={tab === 'income'} label={t('收入')} onPress={() => setTab('income')} colors={colors} />
           </View>
         </View>
 
@@ -411,7 +422,7 @@ const CategoryScreen = () => {
           style={[gs.size50, gs.roundedFull, gs.center, {backgroundColor: colors.primaryText}]}
           onPress={() => navigate('AddCategoryScreen', {categoryKind: tab})}
           hitSlop={hitSlop}
-          accessibilityLabel="新增分类"
+          accessibilityLabel={t('新增分类')}
           accessibilityRole="button">
           <Icon name="plus" size={24} color={colors.buttonText} />
         </TouchableOpacity>

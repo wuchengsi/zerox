@@ -52,9 +52,13 @@ const SettingsScreen = () => {
     appVersion,
     colors,
     handleThemeSelection,
+    handleLanguageSelection,
+    handleAccentColorSelection,
     handleNameUpdate,
     handleCurrencyUpdate,
     selectedTheme,
+    selectedLanguage,
+    selectedAccentColor,
     userName,
     currencySymbol,
     currencyName,
@@ -64,12 +68,27 @@ const SettingsScreen = () => {
     allData,
     handleExportResult,
     requestStorageViaDialog,
+    t,
   } = useSettings();
 
   const themeLabelMap: Record<string, string> = {
-    light: '浅色',
-    dark: '深色',
-    system: '跟随系统',
+    light: t('浅色'),
+    dark: t('深色'),
+    system: t('跟随系统'),
+  };
+
+  const languageLabelMap: Record<string, string> = {
+    zh: t('中文'),
+    en: t('英语'),
+  };
+
+  const accentLabelMap: Record<string, string> = {
+    sage: selectedLanguage === 'en' ? 'Sage' : '鼠尾草绿',
+    mint: selectedLanguage === 'en' ? 'Mint' : '薄荷绿',
+    teal: selectedLanguage === 'en' ? 'Teal' : '湖蓝',
+    sky: selectedLanguage === 'en' ? 'Sky' : '天空蓝',
+    lavender: selectedLanguage === 'en' ? 'Lavender' : '薰衣草紫',
+    coral: selectedLanguage === 'en' ? 'Coral' : '珊瑚橙',
   };
 
   const handleOpenCurrencySheet = useCallback(() => {
@@ -137,13 +156,31 @@ const SettingsScreen = () => {
     });
   }, [selectedTheme, handleThemeSelection]);
 
+  const openLanguagePicker = useCallback(() => {
+    void SheetManager.show('language-picker-sheet', {
+      payload: {
+        currentLanguage: selectedLanguage,
+        onSelect: handleLanguageSelection,
+      },
+    });
+  }, [handleLanguageSelection, selectedLanguage]);
+
+  const openAccentColorPicker = useCallback(() => {
+    void SheetManager.show('accent-color-picker-sheet', {
+      payload: {
+        currentAccentColor: selectedAccentColor,
+        onSelect: handleAccentColorSelection,
+      },
+    });
+  }, [handleAccentColorSelection, selectedAccentColor]);
+
   return (
     <PrimaryView colors={colors} dismissKeyboardOnTouch>
       <View style={[gs.rowCenter, gs.gap10, gs.mt5p]}>
         <TouchableOpacity onPress={() => goBack()} hitSlop={hitSlop}>
           <Icon name="arrow-left" size={22} color={colors.primaryText} />
         </TouchableOpacity>
-        <PrimaryText size={22} weight="semibold">设置</PrimaryText>
+        <PrimaryText size={22} weight="semibold">{t('设置')}</PrimaryText>
       </View>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={gs.pb80}>
         <PrimaryText
@@ -151,21 +188,37 @@ const SettingsScreen = () => {
           weight="semibold"
           color={colors.accentGreen}
           style={[gs.mt20, gs.mb6, {letterSpacing: 0.8}]}>
-          个性化
+          {t('个性化')}
         </PrimaryText>
         <View style={[gs.rounded12, gs.overflowHidden, {backgroundColor: colors.containerColor}]}>
           <SettingsRow
             colors={colors}
             icon="sun-moon"
-            label="主题"
+            label={t('深/浅模式')}
             value={themeLabelMap[selectedTheme] ?? selectedTheme}
             onPress={openThemePicker}
           />
           <View style={[gs.mx16, {height: 1, backgroundColor: colors.secondaryAccent}]} />
           <SettingsRow
             colors={colors}
+            icon="palette"
+            label={t('主题色')}
+            value={accentLabelMap[selectedAccentColor] ?? selectedAccentColor}
+            onPress={openAccentColorPicker}
+          />
+          <View style={[gs.mx16, {height: 1, backgroundColor: colors.secondaryAccent}]} />
+          <SettingsRow
+            colors={colors}
+            icon="globe"
+            label={t('语言')}
+            value={languageLabelMap[selectedLanguage] ?? selectedLanguage}
+            onPress={openLanguagePicker}
+          />
+          <View style={[gs.mx16, {height: 1, backgroundColor: colors.secondaryAccent}]} />
+          <SettingsRow
+            colors={colors}
             icon="user"
-            label="昵称"
+            label={t('昵称')}
             value={userName}
             onPress={() => {
               void SheetManager.show('change-name-sheet', {
@@ -182,7 +235,7 @@ const SettingsScreen = () => {
           <SettingsRow
             colors={colors}
             icon="banknote"
-            label="货币"
+            label={t('货币')}
             onPress={handleOpenCurrencySheet}
             valueNode={
               <View style={gs.itemsEnd}>
@@ -198,14 +251,14 @@ const SettingsScreen = () => {
           weight="semibold"
           color={colors.accentGreen}
           style={[gs.mt20, gs.mb6, {letterSpacing: 0.8}]}>
-          AI 快速记账
+          {t('AI 快速记账')}
         </PrimaryText>
         <View style={[gs.rounded12, gs.overflowHidden, {backgroundColor: colors.containerColor}]}>
           <SettingsRow
             colors={colors}
             icon="bot"
-            label="LLM API 配置"
-            subtitle="OpenAI 兼容接口，本地保存 API Key"
+            label={t('LLM API 配置')}
+            subtitle={t('OpenAI 兼容接口，本地保存 API Key')}
             onPress={() => navigate('AiSettingsScreen')}
           />
         </View>
@@ -215,22 +268,22 @@ const SettingsScreen = () => {
           weight="semibold"
           color={colors.accentGreen}
           style={[gs.mt20, gs.mb6, {letterSpacing: 0.8}]}>
-          数据
+          {t('数据')}
         </PrimaryText>
         <View style={[gs.rounded12, gs.overflowHidden, {backgroundColor: colors.containerColor}]}>
           <SettingsRow
             colors={colors}
             icon="download"
-            label="导出数据"
-            subtitle="稍后可在新设备导入"
+            label={t('导出数据')}
+            subtitle={t('稍后可在新设备导入')}
             onPress={() => exportData(allData)}
           />
           <View style={[gs.mx16, {height: 1, backgroundColor: colors.secondaryAccent}]} />
           <SettingsRow
             colors={colors}
             icon="trash-2"
-            label="删除所有数据"
-            subtitle="此操作无法撤销"
+            label={t('删除所有数据')}
+            subtitle={t('此操作无法撤销')}
             onPress={handleDeleteAllData}
             destructive
           />
@@ -241,39 +294,39 @@ const SettingsScreen = () => {
           weight="semibold"
           color={colors.accentGreen}
           style={[gs.mt20, gs.mb6, {letterSpacing: 0.8}]}>
-          关于
+          {t('关于')}
         </PrimaryText>
         <View style={[gs.rounded12, gs.overflowHidden, {backgroundColor: colors.containerColor}]}>
           <SettingsRow
             colors={colors}
             icon="bug"
-            label="反馈问题"
-            subtitle="在 GitHub 提交 issue"
+            label={t('反馈问题')}
+            subtitle={t('在 GitHub 提交 issue')}
             onPress={handleReportBug}
           />
           <View style={[gs.mx16, {height: 1, backgroundColor: colors.secondaryAccent}]} />
           <SettingsRow
             colors={colors}
             icon="code"
-            label="源代码"
-            subtitle="在 GitHub 查看"
+            label={t('源代码')}
+            subtitle={t('在 GitHub 查看')}
             onPress={handleGithub}
           />
           <View style={[gs.mx16, {height: 1, backgroundColor: colors.secondaryAccent}]} />
           <SettingsRow
             colors={colors}
             icon="info"
-            label="版本"
+            label={t('版本')}
             value={`v${appVersion}`}
           />
         </View>
 
         <View style={[gs.mt20, gs.mb10, gs.center, gs.gap2]}>
           <PrimaryText size={11} color={colors.secondaryText}>
-            保持简单，清楚记账
+            {t('保持简单，清楚记账')}
           </PrimaryText>
           <PrimaryText size={11} color={colors.secondaryText}>
-            使用 <Text style={{color: colors.accentGreen}}>Zerox</Text> 管理日常支出
+            {t('使用')} <Text style={{color: colors.accentGreen}}>Zerox</Text> {t('管理日常支出')}
           </PrimaryText>
         </View>
       </ScrollView>
