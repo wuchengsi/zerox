@@ -92,7 +92,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 10
-        versionName "2.3.5"
+        versionName "1.0.0"
     }
 
     // Enable 16 KB page size support for Android 15+ devices

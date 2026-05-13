@@ -13,7 +13,7 @@ import {useTheme, ThemeMode} from '../../context/ThemeContext';
 import {useDialog} from '../../context/DialogContext';
 import StorageService from '../../utils/asyncStorageService';
 import {updateUserById, updateCurrencyById, deleteAllData} from '../../watermelondb/services';
-import {Linking, Platform} from 'react-native';
+import {Linking} from 'react-native';
 import {setIsOnboarded} from '../../redux/slice/isOnboardedSlice';
 import {fetchAllData, selectAllData} from '../../redux/slice/allDataSlice';
 import {AppDispatch} from '../../redux/store';
@@ -82,49 +82,19 @@ const useSettings = () => {
   );
 
   const handleReportBug = useCallback(() => {
-    const bugSheetURL = 'https://docs.google.com/spreadsheets/d/187UDxJbFloEUkxxX29ZJnAI7HSdhAAdSbIcAByc8CDU/edit?usp=sharing';
-    Linking.openURL(bugSheetURL).catch(err => {
+    const issueURL = 'https://github.com/wuchengsi/zerox/issues/new';
+    Linking.openURL(issueURL).catch(err => {
       if (__DEV__) {
-        console.error('Error opening bug report sheet:', err);
-      }
-    });
-  }, []);
-
-  const handleRateNow = useCallback(() => {
-    const url = Platform.select({
-      ios: 'https://apps.apple.com/app/zero-offline-expense-tracker/id6759560225?action=write-review',
-      default: 'https://play.google.com/store/apps/details?id=com.anotherwhy.zero',
-    });
-    Linking.openURL(url).catch(err => {
-      if (__DEV__) {
-        console.error('Error opening store:', err);
+        console.error('Error opening issue page:', err);
       }
     });
   }, []);
 
   const handleGithub = useCallback(() => {
-    const githubRepoURL = 'https://github.com/indranilbhuin/zero';
+    const githubRepoURL = 'https://github.com/wuchengsi/zerox';
     Linking.openURL(githubRepoURL).catch(err => {
       if (__DEV__) {
         console.error('Error opening GitHub:', err);
-      }
-    });
-  }, []);
-
-  const handlePrivacyPolicy = useCallback(() => {
-    const privacyPolicyURL = 'https://anotherwhy.com/products/awy-001/privacy-policy';
-    Linking.openURL(privacyPolicyURL).catch(err => {
-      if (__DEV__) {
-        console.error('Error opening Privacy Policy:', err);
-      }
-    });
-  }, []);
-
-  const handleTermsAndConditions = useCallback(() => {
-    const termsURL = 'https://anotherwhy.com/products/awy-001/terms';
-    Linking.openURL(termsURL).catch(err => {
-      if (__DEV__) {
-        console.error('Error opening Terms and Conditions:', err);
       }
     });
   }, []);
@@ -185,10 +155,7 @@ const useSettings = () => {
     currencySymbol,
     currencyName,
     handleReportBug,
-    handleRateNow,
     handleGithub,
-    handlePrivacyPolicy,
-    handleTermsAndConditions,
     handleDeleteAllData,
     allData,
     handleExportResult,

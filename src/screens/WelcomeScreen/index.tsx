@@ -16,7 +16,7 @@ const WelcomeScreen = () => {
         <PrimaryText size={28} weight="bold" color={colors.primaryText}>
           欢迎使用{' '}
           <PrimaryText size={28} weight="bold" color={colors.accentGreen}>
-            zero
+            zerox
           </PrimaryText>
         </PrimaryText>
         <PrimaryText size={14} color={colors.secondaryText} style={gs.mt6}>

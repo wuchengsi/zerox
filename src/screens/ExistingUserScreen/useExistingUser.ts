@@ -316,7 +316,7 @@ const useExistingUser = () => {
 
       const {key} = jsonData;
       if (!key || !isValidKey(key)) {
-        setUploadMessage('密钥无效，请上传有效的 Zero 导出文件。');
+        setUploadMessage('密钥无效，请上传有效的 Zerox 导出文件。');
         return;
       }
 

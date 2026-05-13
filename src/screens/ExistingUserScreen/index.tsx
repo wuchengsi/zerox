@@ -68,7 +68,7 @@ const ExistingUserScreen = () => {
           </View>
 
           <PrimaryText size={14} color={colors.secondaryText} style={gs.mt6}>
-            上传你导出的 Zero 备份文件
+            上传你导出的 Zerox 备份文件
           </PrimaryText>
 
           <TouchableOpacity

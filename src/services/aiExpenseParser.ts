@@ -125,7 +125,7 @@ export const buildAiExpensePrompt = (
   const incomeCategories = incomeCategoryNames.length > 0 ? incomeCategoryNames.join('、') : '收入';
 
   return [
-    '你是 Zero 记账应用的自然语言账单解析器。',
+    '你是 Zerox 记账应用的自然语言账单解析器。',
     '只解析支出和收入记录，不要解析转账、预算或理财建议。',
     '用户可能输入一句话、多行文本、带日期上下文的文本，或一句流水式文本。',
     `用户提交时间：${referenceDateTime}`,

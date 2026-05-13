@@ -59,10 +59,7 @@ const SettingsScreen = () => {
     currencySymbol,
     currencyName,
     handleReportBug,
-    handleRateNow,
     handleGithub,
-    handlePrivacyPolicy,
-    handleTermsAndConditions,
     handleDeleteAllData,
     allData,
     handleExportResult,
@@ -104,7 +101,7 @@ const SettingsScreen = () => {
 
         await Share.share({
           url: `file://${path}`,
-          title: '导出 Zero 数据',
+          title: '导出 Zerox 数据',
         });
 
         handleExportResult(true);
@@ -251,16 +248,8 @@ const SettingsScreen = () => {
             colors={colors}
             icon="bug"
             label="反馈问题"
-            subtitle="发现问题？告诉我们"
+            subtitle="在 GitHub 提交 issue"
             onPress={handleReportBug}
-          />
-          <View style={[gs.mx16, {height: 1, backgroundColor: colors.secondaryAccent}]} />
-          <SettingsRow
-            colors={colors}
-            icon="star"
-            label="给应用评分"
-            subtitle="你的反馈会帮助 Zero 变得更好"
-            onPress={handleRateNow}
           />
           <View style={[gs.mx16, {height: 1, backgroundColor: colors.secondaryAccent}]} />
           <SettingsRow
@@ -269,20 +258,6 @@ const SettingsScreen = () => {
             label="源代码"
             subtitle="在 GitHub 查看"
             onPress={handleGithub}
-          />
-          <View style={[gs.mx16, {height: 1, backgroundColor: colors.secondaryAccent}]} />
-          <SettingsRow
-            colors={colors}
-            icon="shield"
-            label="隐私政策"
-            onPress={handlePrivacyPolicy}
-          />
-          <View style={[gs.mx16, {height: 1, backgroundColor: colors.secondaryAccent}]} />
-          <SettingsRow
-            colors={colors}
-            icon="file-text"
-            label="服务条款"
-            onPress={handleTermsAndConditions}
           />
           <View style={[gs.mx16, {height: 1, backgroundColor: colors.secondaryAccent}]} />
           <SettingsRow
@@ -298,7 +273,7 @@ const SettingsScreen = () => {
             保持简单，清楚记账
           </PrimaryText>
           <PrimaryText size={11} color={colors.secondaryText}>
-            使用 <Text style={{color: colors.accentGreen}}>Zero</Text> 管理日常支出
+            使用 <Text style={{color: colors.accentGreen}}>Zerox</Text> 管理日常支出
           </PrimaryText>
         </View>
       </ScrollView>

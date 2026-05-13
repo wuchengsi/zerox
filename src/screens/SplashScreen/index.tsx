@@ -13,7 +13,7 @@ const SplashScreen = () => {
     <PrimaryView colors={colors} style={gs.justifyBetween}>
       <View style={gs.pt20p}>
         <PrimaryText size={72} weight="bold" color={colors.primaryText}>
-          zero
+          zerox
         </PrimaryText>
         <View style={gs.mt10}>
           <PrimaryText size={18} color={colors.secondaryText}>

@@ -181,7 +181,7 @@ const AiSettingsScreen = () => {
             隐私说明
           </PrimaryText>
           <PrimaryText size={12} color={colors.secondaryText} style={{lineHeight: 18}}>
-            自然语言内容会发送到你配置的 LLM 服务商。Zero 只发送当前输入、当前时间和可用分类名称，不发送完整账本历史。
+            自然语言内容会发送到你配置的 LLM 服务商。Zerox 只发送当前输入、当前时间和可用分类名称，不发送完整账本历史。
           </PrimaryText>
           <PrimaryText size={12} color={colors.secondaryText} style={[gs.mt8, {lineHeight: 18}]}>
             API Key 仅保存在本地 MMKV 中，不会写入 Redux、数据库、导入导出文件或日志；但它不是系统 Keychain / Keystore 级别的加密存储。
