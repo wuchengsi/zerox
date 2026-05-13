@@ -3,22 +3,22 @@ import {TouchableOpacity, View} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
 import {SheetManager} from 'react-native-actions-sheet';
-import {FlashList} from '@shopify/flash-list';
 import HeaderContainer from '../../components/molecules/HeaderContainer';
 import Icon from '../../components/atoms/Icons';
 import PrimaryText from '../../components/atoms/PrimaryText';
 import PrimaryView from '../../components/atoms/PrimaryView';
+import TransactionList from '../../components/molecules/TransactionList';
 import DebtsScreen from '../DebtsScreen';
 import useThemeColors from '../../hooks/useThemeColors';
 import {fetchCategories} from '../../redux/slice/categoryDataSlice';
 import {selectCurrencySymbol} from '../../redux/slice/currencyDataSlice';
-import {fetchIncomesByMonth, invalidateIncomeCache, selectIncomeData} from '../../redux/slice/incomeDataSlice';
+import {fetchIncomesByMonth, selectIncomeData} from '../../redux/slice/incomeDataSlice';
 import {selectMonthIndex, selectYear, setMonthSelection} from '../../redux/slice/monthSelectionSlice';
 import {selectUserId} from '../../redux/slice/userIdSlice';
 import {AppDispatch} from '../../redux/store';
-import {deleteIncomeById, ensureDefaultCategoriesForUser} from '../../watermelondb/services';
+import {ensureDefaultCategoriesForUser} from '../../watermelondb/services';
 import type {IncomeWithCategory} from '../../watermelondb/services';
-import {formatCalendar, formatDate, getCurrentYear, getMonthIndex, getMonthNames, getMonthNumber, sortByDateDesc} from '../../utils/dateUtils';
+import {getCurrentYear, getMonthIndex, getMonthNames, getMonthNumber} from '../../utils/dateUtils';
 import {formatCurrency} from '../../utils/numberUtils';
 import {navigate} from '../../utils/navigationUtils';
 import {loadAvailableYears} from '../../utils/availableYearsCache';
@@ -75,7 +75,6 @@ const IncomeScreen = () => {
     });
   }, [availableYears, dispatch, selectedMonth, selectedYear]);
 
-  const sortedIncomes = useMemo(() => sortByDateDesc(incomes), [incomes]);
   const totalIncome = useMemo(
     () => incomes.reduce((sum, income) => sum + income.amount, 0),
     [incomes],
@@ -95,15 +94,6 @@ const IncomeScreen = () => {
     }
     return Array.from(map.values()).sort((a, b) => b.amount - a.amount);
   }, [colors.accentGreen, incomes, t]);
-
-  const handleDeleteIncome = useCallback(
-    async (incomeId: string) => {
-      await deleteIncomeById(incomeId);
-      dispatch(invalidateIncomeCache());
-      dispatch(fetchIncomesByMonth(yearMonth));
-    },
-    [dispatch, yearMonth],
-  );
 
   const segment = useCallback(
     (value: 'income' | 'debt', label: string) => {
@@ -132,7 +122,7 @@ const IncomeScreen = () => {
 
   const listHeader = useMemo(
     () => (
-      <View>
+      <View style={gs.px16}>
         <TouchableOpacity
           onPress={openMonthPicker}
           activeOpacity={0.7}
@@ -181,6 +171,7 @@ const IncomeScreen = () => {
       openMonthPicker,
       selectedMonth,
       selectedYear,
+      t,
       totalIncome,
     ],
   );
@@ -196,54 +187,7 @@ const IncomeScreen = () => {
         </PrimaryText>
       </View>
     ),
-    [colors.secondaryAccent, colors.secondaryText],
-  );
-
-  const renderIncome = useCallback(
-    ({item: income}: {item: IncomeWithCategory}) => (
-      <View
-        style={[gs.rounded12, gs.rowBetweenCenter, gs.px14, gs.py10, gs.mb6, {backgroundColor: colors.containerColor}]}>
-        <TouchableOpacity
-          activeOpacity={0.7}
-          style={[gs.rowCenter, gs.flex1]}
-          onPress={() =>
-            navigate('UpdateIncomeScreen', {
-              incomeId: income.id,
-              incomeTitle: income.title,
-              incomeAmount: income.amount,
-              incomeDate: income.date,
-              category: income.category,
-            })
-          }>
-          <View style={[gs.size36, gs.center, gs.rounded10, gs.mr10, {backgroundColor: colors.iconContainer}]}>
-            <Icon name={income.category?.icon || 'wallet'} size={18} color={income.category?.color || colors.accentGreen} />
-          </View>
-          <View style={gs.flex1}>
-            <PrimaryText weight="medium" numberOfLines={1}>{income.title}</PrimaryText>
-            <PrimaryText size={11} color={colors.secondaryText} numberOfLines={1}>
-              {income.category?.name ?? t('收入')} · {formatCalendar(formatDate(income.date, 'YYYY-MM-DD'))}
-            </PrimaryText>
-          </View>
-        </TouchableOpacity>
-        <View style={[gs.rowCenter, gs.ml10, gs.gap8]}>
-          <PrimaryText size={14} weight="semibold" variant="number">
-            {currencySymbol}{formatCurrency(income.amount)}
-          </PrimaryText>
-          <TouchableOpacity onPress={() => handleDeleteIncome(income.id)} hitSlop={hitSlop}>
-            <Icon name="trash-2" size={17} color={colors.accentOrange} />
-          </TouchableOpacity>
-        </View>
-      </View>
-    ),
-    [
-      colors.accentGreen,
-      colors.accentOrange,
-      colors.containerColor,
-      colors.iconContainer,
-      colors.secondaryText,
-      currencySymbol,
-      handleDeleteIncome,
-    ],
+    [colors.secondaryAccent, colors.secondaryText, t],
   );
 
   return (
@@ -260,14 +204,14 @@ const IncomeScreen = () => {
         <DebtsScreen embedded />
       ) : (
         <>
-          <FlashList
-            data={sortedIncomes}
-            renderItem={renderIncome}
-            keyExtractor={income => income.id}
+          <TransactionList
+            allExpenses={incomes}
+            currencySymbol={currencySymbol}
+            targetMonth={yearMonth}
+            edgeToEdge
             ListHeaderComponent={listHeader}
             ListEmptyComponent={listEmpty}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{...gs.px16, ...gs.pb80}}
+            contentContainerStyle={{paddingBottom: 80}}
           />
           <View style={[gs.absolute, gs.bottom15, gs.right15, gs.zIndex1]}>
             <TouchableOpacity

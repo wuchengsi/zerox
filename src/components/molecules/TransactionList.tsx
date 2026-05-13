@@ -275,6 +275,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
   const openSwipeableRef = useRef<{close: () => void} | null>(null);
   const deletionTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const [pendingDeletes, setPendingDeletes] = useState<Map<string, Transaction>>(() => new Map());
+  const [restoredTransactions, setRestoredTransactions] = useState<Map<string, Transaction>>(() => new Map());
   const listScopeKey = targetMonth ?? targetDate ?? 'all-transactions';
 
   useEffect(
@@ -288,15 +289,27 @@ const TransactionList: React.FC<TransactionListProps> = ({
   const listData: TransactionListItem[] = useMemo(() => {
     const groupedExpenses = new Map<string, Array<Transaction>>();
     const pendingKeys = new Set(pendingDeletes.keys());
+    const visibleKeys = new Set<string>();
 
     allExpenses?.forEach(expense => {
       const deleteKey = `${expense.transactionType ?? 'expense'}-${String(expense.id)}`;
       if (pendingKeys.has(deleteKey)) {
         return;
       }
+      visibleKeys.add(deleteKey);
       const date = formatDate(expense.date, 'YYYY-MM-DD');
       const currentGroup = groupedExpenses.get(date) ?? [];
       currentGroup.push(expense);
+      groupedExpenses.set(date, currentGroup);
+    });
+
+    restoredTransactions.forEach((transaction, restoreKey) => {
+      if (visibleKeys.has(restoreKey) || pendingKeys.has(restoreKey)) {
+        return;
+      }
+      const date = formatDate(transaction.date, 'YYYY-MM-DD');
+      const currentGroup = groupedExpenses.get(date) ?? [];
+      currentGroup.push(transaction);
       groupedExpenses.set(date, currentGroup);
     });
 
@@ -327,7 +340,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
         }),
       ];
     });
-  }, [allExpenses, pendingDeletes]);
+  }, [allExpenses, pendingDeletes, restoredTransactions]);
 
   const handleEdit = useCallback((expense: Transaction) => {
     if (expense.transactionType === 'income') {
@@ -449,8 +462,9 @@ const TransactionList: React.FC<TransactionListProps> = ({
       }
 
       try {
+        let restoredId = '';
         if (transaction.transactionType === 'income') {
-          await createIncome(
+          restoredId = await createIncome(
             transaction.userId,
             transaction.title,
             transaction.amount,
@@ -458,7 +472,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
             transaction.date,
           );
         } else {
-          await createExpense(
+          restoredId = await createExpense(
             transaction.userId,
             transaction.title,
             transaction.amount,
@@ -466,8 +480,22 @@ const TransactionList: React.FC<TransactionListProps> = ({
             transaction.date,
           );
         }
+        const restoredKey = `${transaction.transactionType ?? 'expense'}-${restoredId}`;
+        setRestoredTransactions(prev => {
+          const next = new Map(prev);
+          next.set(restoredKey, {...transaction, id: restoredId});
+          return next;
+        });
         removePendingDelete(deleteKey);
         await refreshAfterChange(transaction);
+        setRestoredTransactions(prev => {
+          if (!prev.has(restoredKey)) {
+            return prev;
+          }
+          const next = new Map(prev);
+          next.delete(restoredKey);
+          return next;
+        });
       } catch (error) {
         if (__DEV__) {
           console.error('Error restoring transaction:', error);
@@ -522,13 +550,18 @@ const TransactionList: React.FC<TransactionListProps> = ({
     [refreshing, onRefresh],
   );
 
+  const listExtraData = useMemo(
+    () => ({pendingDeletes, restoredTransactions}),
+    [pendingDeletes, restoredTransactions],
+  );
+
   return (
     <FlashList
       key={listScopeKey}
       data={listData}
       renderItem={renderItem}
       keyExtractor={item => item.id}
-      extraData={pendingDeletes}
+      extraData={listExtraData}
       getItemType={item => item.itemType}
       ListHeaderComponent={ListHeaderComponent}
       ListEmptyComponent={ListEmptyComponent}

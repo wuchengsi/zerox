@@ -243,13 +243,13 @@ const ReportsScreen = () => {
         </TouchableOpacity>
         <View style={[gs.flex1, gs.px12, gs.py10, gs.rounded8, {backgroundColor: colors.secondaryAccent}]}>
           <PrimaryText size={11} color={colors.secondaryText}>{t('总计')}</PrimaryText>
-          <PrimaryText size={14} weight="semibold" variant="number" numberOfLines={1}>
+          <PrimaryText size={14} weight="semibold" variant="number" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72}>
             {currencySymbol}{formatCurrency(totalAmountForMonth)}
           </PrimaryText>
         </View>
         <View style={[gs.flex1, gs.px12, gs.py10, gs.rounded8, {backgroundColor: colors.secondaryAccent}]}>
           <PrimaryText size={11} color={colors.secondaryText}>{t('日均')}</PrimaryText>
-          <PrimaryText size={14} weight="semibold" variant="number" numberOfLines={1}>
+          <PrimaryText size={14} weight="semibold" variant="number" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72}>
             {currencySymbol}{formatCurrency(totalAmountForMonth / daysInMonth)}
           </PrimaryText>
         </View>

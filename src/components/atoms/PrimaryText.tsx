@@ -28,6 +28,8 @@ interface PrimaryTextProps {
   color?: string;
   numberOfLines?: number;
   ellipsizeMode?: 'head' | 'middle' | 'tail' | 'clip';
+  adjustsFontSizeToFit?: boolean;
+  minimumFontScale?: number;
   onPress?: () => void;
   selectable?: boolean;
 }
@@ -41,6 +43,8 @@ const PrimaryText: React.FC<PrimaryTextProps> = ({
   color,
   numberOfLines,
   ellipsizeMode,
+  adjustsFontSizeToFit = false,
+  minimumFontScale,
   onPress,
   selectable = false,
 }) => {
@@ -65,6 +69,8 @@ const PrimaryText: React.FC<PrimaryTextProps> = ({
       style={[textStyle, style]}
       numberOfLines={numberOfLines}
       ellipsizeMode={resolvedEllipsizeMode}
+      adjustsFontSizeToFit={adjustsFontSizeToFit}
+      minimumFontScale={minimumFontScale}
       selectable={selectable}>
       {children}
     </Text>
