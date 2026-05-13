@@ -19,6 +19,7 @@ export interface AiAutoExpenseTask {
   startedAt?: string;
   finishedAt?: string;
   errorMessage?: string;
+  failureViewedAt?: string;
   skippedCount?: number;
   createdCount?: number;
   expenseIds?: string[];

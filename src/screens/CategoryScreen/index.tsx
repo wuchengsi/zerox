@@ -1,6 +1,8 @@
 import {RefreshControl, ScrollView, TouchableOpacity, View} from 'react-native';
-import React, {useCallback, useState} from 'react';
+import React, {memo, useCallback, useEffect, useRef, useState} from 'react';
+import Animated, {interpolate, SharedValue, useAnimatedStyle} from 'react-native-reanimated';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import {TouchableOpacity as GestureTouchableOpacity} from 'react-native-gesture-handler';
 import {navigate} from '../../utils/navigationUtils';
 import Icon from '../../components/atoms/Icons';
 import HeaderContainer from '../../components/molecules/HeaderContainer';
@@ -45,13 +47,11 @@ const CategoryRow = ({
   category,
   colors,
   onEdit,
-  onDelete,
   prefix,
 }: {
   category: Category;
   colors: Colors;
   onEdit: (category: Category) => void;
-  onDelete: (id: string) => void;
   prefix?: string;
 }) => (
   <View
@@ -83,29 +83,70 @@ const CategoryRow = ({
       <TouchableOpacity onPress={() => onEdit(category)} hitSlop={hitSlop}>
         <Icon name="pencil" size={18} color={colors.secondaryText} />
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => onDelete(category.id)} hitSlop={hitSlop}>
-        <Icon name="trash-2" size={18} color={colors.accentOrange} />
-      </TouchableOpacity>
     </View>
   </View>
 );
 
-const ExpenseGroupDeleteAction = ({
+const ACTION_WIDTH = 50;
+
+const CategoryDeleteAction = ({
+  progress,
   colors,
   onPress,
 }: {
+  progress: SharedValue<number>;
   colors: Colors;
   onPress: () => void;
+}) => {
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(progress.value, [0, 0.6, 1], [0, 0.8, 1]),
+    transform: [{scale: interpolate(progress.value, [0, 1], [0.6, 1])}],
+  }));
+
+  return (
+    <GestureTouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      style={[gs.center, {flex: 1, width: ACTION_WIDTH}]}>
+      <Animated.View style={[gs.size40, gs.roundedFull, gs.center, animatedStyle, {backgroundColor: colors.lightAccent}]}>
+        <Icon name="trash-2" size={18} color={colors.accentOrange} />
+      </Animated.View>
+    </GestureTouchableOpacity>
+  );
+};
+
+const InlineUndo = memo(({
+  colors,
+  onUndo,
+}: {
+  colors: Colors;
+  onUndo: () => void;
 }) => (
-  <TouchableOpacity
-    onPress={onPress}
-    activeOpacity={0.7}
-    style={[gs.center, gs.pl10, gs.pr5]}>
-    <View style={[gs.size40, gs.roundedFull, gs.center, {backgroundColor: colors.lightAccent}]}>
-      <Icon name="trash-2" size={18} color={colors.accentOrange} />
+  <View style={gs.mb6}>
+    <View
+      style={[
+        gs.rounded12,
+        gs.rowBetweenCenter,
+        gs.px14,
+        gs.py12,
+        {backgroundColor: colors.secondaryAccent},
+      ]}>
+      <PrimaryText size={13} color={colors.secondaryText}>
+        分类已删除
+      </PrimaryText>
+      <TouchableOpacity
+        onPress={onUndo}
+        activeOpacity={0.7}
+        style={[gs.py8, gs.px14, gs.rounded10, {backgroundColor: colors.accentGreen}]}>
+        <PrimaryText size={12} weight="semibold" color={colors.buttonText}>
+          撤销
+        </PrimaryText>
+      </TouchableOpacity>
     </View>
-  </TouchableOpacity>
-);
+  </View>
+));
+
+const DELETE_DELAY_MS = 3000;
 
 const CategoryScreen = () => {
   const {
@@ -119,6 +160,67 @@ const CategoryScreen = () => {
   } = useCategory();
   const [tab, setTab] = useState<'expense' | 'income'>('expense');
   const [expandedExpenseGroupId, setExpandedExpenseGroupId] = useState<string | null>(null);
+  const deletionTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<string>>(() => new Set());
+
+  useEffect(
+    () => () => {
+      deletionTimeoutsRef.current.forEach(timeout => clearTimeout(timeout));
+      deletionTimeoutsRef.current.clear();
+    },
+    [],
+  );
+
+  const removePendingDeleteId = useCallback((categoryId: string) => {
+    setPendingDeleteIds(prev => {
+      if (!prev.has(categoryId)) {
+        return prev;
+      }
+
+      const next = new Set(prev);
+      next.delete(categoryId);
+      return next;
+    });
+  }, []);
+
+  const scheduleDelete = useCallback(
+    (categoryId: string) => {
+      setPendingDeleteIds(prev => new Set(prev).add(categoryId));
+
+      const existingTimeout = deletionTimeoutsRef.current.get(categoryId);
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+      }
+
+      const timeout = setTimeout(async () => {
+        deletionTimeoutsRef.current.delete(categoryId);
+        removePendingDeleteId(categoryId);
+        await handleDelete(categoryId);
+      }, DELETE_DELAY_MS);
+
+      deletionTimeoutsRef.current.set(categoryId, timeout);
+    },
+    [handleDelete, removePendingDeleteId],
+  );
+
+  const handleUndoDelete = useCallback(
+    (categoryId: string) => {
+      const timeout = deletionTimeoutsRef.current.get(categoryId);
+      if (timeout) {
+        clearTimeout(timeout);
+        deletionTimeoutsRef.current.delete(categoryId);
+      }
+      removePendingDeleteId(categoryId);
+    },
+    [removePendingDeleteId],
+  );
+
+  const renderPendingDelete = useCallback(
+    (categoryId: string) => (
+      <InlineUndo colors={colors} onUndo={() => handleUndoDelete(categoryId)} />
+    ),
+    [colors, handleUndoDelete],
+  );
 
   const editCategory = useCallback(
     (category: Category) => {
@@ -137,20 +239,29 @@ const CategoryScreen = () => {
 
   const renderExpenseGroup = useCallback(
     (group: ExpenseCategoryGroup) => {
+      if (pendingDeleteIds.has(group.id)) {
+        return (
+          <View key={group.id} style={gs.mb8}>
+            {renderPendingDelete(group.id)}
+          </View>
+        );
+      }
+
       const isExpanded = expandedExpenseGroupId === group.id;
       const toggleGroup = () => setExpandedExpenseGroupId(current => (current === group.id ? null : group.id));
       const deleteGroup = () => {
         if (isExpanded) {
           setExpandedExpenseGroupId(null);
         }
-        handleDelete(group.id);
+        scheduleDelete(group.id);
       };
 
       return (
         <View key={group.id} style={gs.mb8}>
           <ReanimatedSwipeable
-            renderRightActions={(_progress, _translation, swipeableMethods) => (
-              <ExpenseGroupDeleteAction
+            renderRightActions={(progress, _translation, swipeableMethods) => (
+              <CategoryDeleteAction
+                progress={progress}
                 colors={colors}
                 onPress={() => {
                   swipeableMethods.close();
@@ -209,20 +320,38 @@ const CategoryScreen = () => {
           {isExpanded ? (
             <View style={gs.mt8}>
               {group.children.map(child => (
-                <CategoryRow
-                  key={child.id}
-                  category={child}
-                  colors={colors}
-                  onEdit={editCategory}
-                  onDelete={handleDelete}
-                />
+                pendingDeleteIds.has(child.id) ? (
+                  <View key={child.id}>{renderPendingDelete(child.id)}</View>
+                ) : (
+                  <ReanimatedSwipeable
+                    key={child.id}
+                    renderRightActions={(progress, _translation, swipeableMethods) => (
+                      <CategoryDeleteAction
+                        progress={progress}
+                        colors={colors}
+                        onPress={() => {
+                          swipeableMethods.close();
+                          scheduleDelete(child.id);
+                        }}
+                      />
+                    )}
+                    friction={2}
+                    overshootRight={false}
+                    overshootFriction={8}>
+                    <CategoryRow
+                      category={child}
+                      colors={colors}
+                      onEdit={editCategory}
+                    />
+                  </ReanimatedSwipeable>
+                )
               ))}
             </View>
           ) : null}
         </View>
       );
     },
-    [colors, editCategory, expandedExpenseGroupId, handleDelete],
+    [colors, editCategory, expandedExpenseGroupId, handleUndoDelete, pendingDeleteIds, renderPendingDelete, scheduleDelete],
   );
 
   const isEmpty = tab === 'expense' ? expenseGroups.length === 0 : incomeCategories.length === 0;
@@ -248,13 +377,31 @@ const CategoryScreen = () => {
             expenseGroups.map(renderExpenseGroup)
           ) : (
             incomeCategories.map(category => (
-              <CategoryRow
-                key={category.id}
-                category={category}
-                colors={colors}
-                onEdit={editCategory}
-                onDelete={handleDelete}
-              />
+              pendingDeleteIds.has(category.id) ? (
+                <View key={category.id}>{renderPendingDelete(category.id)}</View>
+              ) : (
+                <ReanimatedSwipeable
+                  key={category.id}
+                  renderRightActions={(progress, _translation, swipeableMethods) => (
+                    <CategoryDeleteAction
+                      progress={progress}
+                      colors={colors}
+                      onPress={() => {
+                        swipeableMethods.close();
+                        scheduleDelete(category.id);
+                      }}
+                    />
+                  )}
+                  friction={2}
+                  overshootRight={false}
+                  overshootFriction={8}>
+                  <CategoryRow
+                    category={category}
+                    colors={colors}
+                    onEdit={editCategory}
+                  />
+                </ReanimatedSwipeable>
+              )
             ))
           )}
         </ScrollView>

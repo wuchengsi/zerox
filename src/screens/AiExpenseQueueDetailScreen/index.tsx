@@ -22,6 +22,7 @@ import {
   createQueuedAiAutoExpenseTask,
   getAiAutoExpenseTaskById,
   subscribeAiAutoExpenseTasks,
+  updateAiAutoExpenseTask,
 } from '../../services/aiAutoExpenseTaskService';
 import {processAiAutoExpenseQueue} from '../../services/aiAutoExpenseRunner';
 import {formatDate, getISODateTime, getMonthNames, getMonthNumber} from '../../utils/dateUtils';
@@ -59,6 +60,9 @@ const getStatusText = (task: AiAutoExpenseTask): string => {
 const isRetryableTask = (task: AiAutoExpenseTask): boolean =>
   task.status === 'failed' || task.status === 'partial_failed';
 
+const shouldMarkFailureViewed = (task: AiAutoExpenseTask): boolean =>
+  isRetryableTask(task) && !task.failureViewedAt;
+
 const AiExpenseQueueDetailScreen = () => {
   const colors = useThemeColors();
   const {showAlert, showDialog} = useDialog();
@@ -86,6 +90,14 @@ const AiExpenseQueueDetailScreen = () => {
       }),
     [route.params.taskId],
   );
+
+  useEffect(() => {
+    if (!task || !shouldMarkFailureViewed(task)) {
+      return;
+    }
+
+    updateAiAutoExpenseTask(task.taskId, {failureViewedAt: new Date().toISOString()});
+  }, [task]);
 
   const currentYearMonth = useMemo(
     () => `${selectedYear}-${getMonthNumber(MONTHS[selectedMonthIndex])}`,

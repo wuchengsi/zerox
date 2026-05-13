@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   ChevronLeft,
   ChevronDown,
+  ChevronUp,
   ChevronRight,
   Menu,
 
@@ -376,6 +377,7 @@ export const ICON_REGISTRY = {
   'arrow-left': ArrowLeft,
   'chevron-left': ChevronLeft,
   'chevron-down': ChevronDown,
+  'chevron-up': ChevronUp,
   'chevron-right': ChevronRight,
   menu: Menu,
 

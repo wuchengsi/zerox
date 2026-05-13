@@ -34,6 +34,9 @@ import {gs} from '../../styles/globalStyles';
 const MONTHS = getMonthNames();
 const INPUT_SAVE_DEBOUNCE_MS = 400;
 
+const isUnseenFailedTask = (task: AiAutoExpenseTask): boolean =>
+  (task.status === 'failed' || task.status === 'partial_failed') && !task.failureViewedAt;
+
 const AiQuickExpenseScreen = () => {
   const colors = useThemeColors();
   const {showAlert} = useDialog();
@@ -103,7 +106,7 @@ const AiQuickExpenseScreen = () => {
   );
 
   const activeCount = tasks.filter(task => task.status === 'queued' || task.status === 'running').length;
-  const failedCount = tasks.filter(task => task.status === 'failed').length;
+  const failedCount = tasks.filter(isUnseenFailedTask).length;
   const runningCount = tasks.filter(task => task.status === 'running').length;
   const queueSubtitle =
     runningCount > 0
