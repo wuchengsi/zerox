@@ -19,10 +19,9 @@ import {fetchCategories} from '../../redux/slice/categoryDataSlice';
 import {getCurrentYear, getMonthNumber, getMonthNames, sortByDateDesc} from '../../utils/dateUtils';
 import {ExpenseWithCategory as Expense, IncomeWithCategory} from '../../watermelondb/services';
 import {AppDispatch} from '../../redux/store';
-import {loadAvailableYears} from '../../utils/availableYearsCache';
+import {getCachedYears, loadAvailableYears} from '../../utils/availableYearsCache';
 import {useFocusEffect} from '@react-navigation/native';
 
-const MONTHS = getMonthNames();
 const CURRENT_YEAR = getCurrentYear();
 const CURRENT_MONTH_INDEX = new Date().getMonth();
 
@@ -35,6 +34,7 @@ const useHome = () => {
 
   const selectedMonthIndex = useSelector(selectMonthIndex);
   const selectedYear = useSelector(selectYear);
+  const months = getMonthNames();
 
   const allTransactions = useSelector(selectExpenseData) ?? [];
   const allIncomes = useSelector(selectIncomeData) ?? [];
@@ -47,7 +47,7 @@ const useHome = () => {
   const userId = useSelector(selectUserId);
   const currencySymbol = useSelector(selectCurrencySymbol);
 
-  const selectedMonthName = MONTHS[selectedMonthIndex];
+  const selectedMonthName = months[selectedMonthIndex];
   const yearMonth = `${selectedYear}-${getMonthNumber(selectedMonthName)}`;
 
   useEffect(() => {
@@ -58,6 +58,10 @@ const useHome = () => {
     if (userId) {
       dispatch(fetchCurrency());
       dispatch(fetchCategories());
+      const cachedYears = getCachedYears(userId);
+      if (cachedYears.length > 0) {
+        setAvailableYears(cachedYears);
+      }
       loadAvailableYears(userId).then(years => {
         if (years.length > 0) {
           setAvailableYears(years);

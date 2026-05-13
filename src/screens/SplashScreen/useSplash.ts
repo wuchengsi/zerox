@@ -4,7 +4,7 @@ import {navigate} from '../../utils/navigationUtils';
 
 const useSplash = () => {
   const handleClick = useCallback(() => {
-    navigate('WelcomeScreen');
+    navigate('OnboardingScreen');
   }, []);
 
   const colors = useThemeColors();

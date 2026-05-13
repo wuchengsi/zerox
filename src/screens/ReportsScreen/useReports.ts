@@ -15,7 +15,7 @@ import {selectCurrencySymbol} from '../../redux/slice/currencyDataSlice';
 import {selectUserId} from '../../redux/slice/userIdSlice';
 import {ExpenseData as ExpenseDocType} from '../../watermelondb/services';
 import {AppDispatch} from '../../redux/store';
-import {loadAvailableYears} from '../../utils/availableYearsCache';
+import {getCachedYears, loadAvailableYears} from '../../utils/availableYearsCache';
 
 interface TransactionWithCategory extends ExpenseDocType {
   category?: {
@@ -46,6 +46,10 @@ const useReports = () => {
 
   useEffect(() => {
     if (userId) {
+      const cachedYears = getCachedYears(userId);
+      if (cachedYears.length > 0) {
+        setAvailableYears(cachedYears);
+      }
       loadAvailableYears(userId).then(years => {
         if (years.length > 0) {
           setAvailableYears(years);

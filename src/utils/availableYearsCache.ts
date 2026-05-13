@@ -37,11 +37,11 @@ export const loadAvailableYears = async (userId: string): Promise<number[]> => {
   return years;
 };
 
-export const ensureYearInCache = (year: number): number[] => {
-  const cached = getCachedYears();
+export const ensureYearInCache = (year: number, userId?: string): number[] => {
+  const cached = getCachedYears(userId);
   if (!cached.includes(year)) {
     const updated = [...cached, year].sort((a, b) => a - b);
-    setCachedYears(updated);
+    setCachedYears(updated, userId);
     return updated;
   }
   return cached;

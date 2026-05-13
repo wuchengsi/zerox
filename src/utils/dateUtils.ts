@@ -171,11 +171,21 @@ export const getISODateTime = (): string => {
 export const sortByDateDesc = <T extends {date: DateInput}>(
   items: T[],
 ): T[] => {
-  return [...items].sort((a, b) => diffDates(b.date, a.date));
+  return [...items].sort((a, b) => {
+    if (typeof a.date === 'string' && typeof b.date === 'string') {
+      return b.date.localeCompare(a.date);
+    }
+    return diffDates(b.date, a.date);
+  });
 };
 
 export const sortByDateAsc = <T extends {date: DateInput}>(items: T[]): T[] => {
-  return [...items].sort((a, b) => diffDates(a.date, b.date));
+  return [...items].sort((a, b) => {
+    if (typeof a.date === 'string' && typeof b.date === 'string') {
+      return a.date.localeCompare(b.date);
+    }
+    return diffDates(a.date, b.date);
+  });
 };
 
 export default {

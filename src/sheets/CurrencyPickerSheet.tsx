@@ -89,7 +89,7 @@ const CurrencyPickerSheet: React.FC<SheetProps<'currency-picker-sheet'>> = React
         onClosePress: () => void SheetManager.hide(props.sheetId),
       }}
       onClose={handleClose}
-      gestureEnabled>
+      gestureEnabled={false}>
       <View style={[gs.px15, gs.pb10]}>
         <View
           style={[

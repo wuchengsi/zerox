@@ -142,7 +142,7 @@ const runSingleTask = async ({
 
         const year = Number.parseInt(formatDate(item.date, 'YYYY'), 10);
         if (!Number.isNaN(year)) {
-          ensureYearInCache(year);
+          ensureYearInCache(year, userId);
         }
       } catch {
         skippedCount += 1;

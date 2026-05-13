@@ -17,6 +17,7 @@ import {Linking} from 'react-native';
 import {setIsOnboarded} from '../../redux/slice/isOnboardedSlice';
 import {fetchAllData, selectAllData} from '../../redux/slice/allDataSlice';
 import {AppDispatch} from '../../redux/store';
+import {resetAppState} from '../../redux/rootReducer';
 
 const useSettings = () => {
   const userName = useSelector(selectUserName);
@@ -118,6 +119,7 @@ const useSettings = () => {
     if (confirmed) {
       await deleteAllData();
       StorageService.setItemSync('isOnboarded', JSON.stringify(false));
+      dispatch(resetAppState());
       dispatch(setIsOnboarded(false));
     }
   }, [dispatch, showDialog, t]);

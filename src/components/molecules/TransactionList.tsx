@@ -461,6 +461,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
         return;
       }
 
+      let restoredKey = '';
       try {
         let restoredId = '';
         if (transaction.transactionType === 'income') {
@@ -480,7 +481,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
             transaction.date,
           );
         }
-        const restoredKey = `${transaction.transactionType ?? 'expense'}-${restoredId}`;
+        restoredKey = `${transaction.transactionType ?? 'expense'}-${restoredId}`;
         setRestoredTransactions(prev => {
           const next = new Map(prev);
           next.set(restoredKey, {...transaction, id: restoredId});
@@ -488,6 +489,14 @@ const TransactionList: React.FC<TransactionListProps> = ({
         });
         removePendingDelete(deleteKey);
         await refreshAfterChange(transaction);
+      } catch (error) {
+        if (__DEV__) {
+          console.error('Error restoring transaction:', error);
+        }
+      } finally {
+        if (!restoredKey) {
+          return;
+        }
         setRestoredTransactions(prev => {
           if (!prev.has(restoredKey)) {
             return prev;
@@ -496,10 +505,6 @@ const TransactionList: React.FC<TransactionListProps> = ({
           next.delete(restoredKey);
           return next;
         });
-      } catch (error) {
-        if (__DEV__) {
-          console.error('Error restoring transaction:', error);
-        }
       }
     },
     [pendingDeletes, refreshAfterChange, removePendingDelete],

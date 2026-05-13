@@ -21,7 +21,7 @@ import type {IncomeWithCategory} from '../../watermelondb/services';
 import {getCurrentYear, getMonthIndex, getMonthNames, getMonthNumber} from '../../utils/dateUtils';
 import {formatCurrency} from '../../utils/numberUtils';
 import {navigate} from '../../utils/navigationUtils';
-import {loadAvailableYears} from '../../utils/availableYearsCache';
+import {getCachedYears, loadAvailableYears} from '../../utils/availableYearsCache';
 import {gs, hitSlop} from '../../styles/globalStyles';
 import {useLanguage} from '../../context/LanguageContext';
 
@@ -47,6 +47,10 @@ const IncomeScreen = () => {
       ensureDefaultCategoriesForUser(userId).then(() => {
         dispatch(fetchCategories());
       });
+      const cachedYears = getCachedYears(userId);
+      if (cachedYears.length > 0) {
+        setAvailableYears(cachedYears);
+      }
       loadAvailableYears(userId).then(years => {
         if (years.length > 0) {
           setAvailableYears(years);

@@ -97,7 +97,7 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
 
       const yearMonth = formatDate(createdAt, 'YYYY-MM');
       const year = Number.parseInt(formatDate(createdAt, 'YYYY'), 10);
-      ensureYearInCache(year);
+      ensureYearInCache(year, userId);
       dispatch(invalidateExpenseCache());
       await dispatch(fetchExpensesByMonth(yearMonth));
       goBack();
@@ -124,7 +124,7 @@ const ExpenseEntry: React.FC<ExpenseEntryProps> = ({type, route}) => {
 
       const yearMonth = formatDate(createdAt, 'YYYY-MM');
       const year = Number.parseInt(formatDate(createdAt, 'YYYY'), 10);
-      ensureYearInCache(year);
+      ensureYearInCache(year, userId);
       dispatch(invalidateExpenseCache());
       await dispatch(fetchExpensesByMonth(yearMonth));
       goBack();

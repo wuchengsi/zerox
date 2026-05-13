@@ -48,7 +48,14 @@ const getNumberFormatter = (
   locale: string,
   options: Intl.NumberFormatOptions,
 ): Intl.NumberFormat => {
-  const cacheKey = `${locale}|${JSON.stringify(options)}`;
+  const cacheKey = [
+    locale,
+    options.notation ?? '',
+    options.compactDisplay ?? '',
+    options.minimumFractionDigits ?? '',
+    options.maximumFractionDigits ?? '',
+    options.useGrouping ?? '',
+  ].join('|');
   let formatter = numberFormatCache.get(cacheKey);
   if (!formatter) {
     formatter = new Intl.NumberFormat(locale, options);

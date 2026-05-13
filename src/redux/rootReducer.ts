@@ -1,4 +1,5 @@
 import {combineReducers} from 'redux';
+import {createAction} from '@reduxjs/toolkit';
 import userOnboardingReducer from './slice/isOnboardedSlice';
 import currencyDataReducer from './slice/currencyDataSlice';
 import themePreferenceReducer from './slice/themePreferenceSlice';
@@ -16,7 +17,9 @@ import allDataReducer from './slice/allDataSlice';
 import individualDebtorReducer from './slice/IndividualDebtorSlice';
 import monthSelectionReducer from './slice/monthSelectionSlice';
 
-const rootReducer = combineReducers({
+export const resetAppState = createAction('app/reset');
+
+const appReducer = combineReducers({
   userOnboarding: userOnboardingReducer,
   currencyData: currencyDataReducer,
   themePreference: themePreferenceReducer,
@@ -34,6 +37,19 @@ const rootReducer = combineReducers({
   individualDebtor: individualDebtorReducer,
   monthSelection: monthSelectionReducer,
 });
+
+const rootReducer: typeof appReducer = (state, action) => {
+  if (resetAppState.match(action)) {
+    return appReducer(
+      {
+        userOnboarding: {isOnboarded: false},
+      } as Parameters<typeof appReducer>[0],
+      action,
+    );
+  }
+
+  return appReducer(state, action);
+};
 
 export type RootState = ReturnType<typeof rootReducer>;
 

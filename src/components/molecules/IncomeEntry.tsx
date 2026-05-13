@@ -71,10 +71,10 @@ const IncomeEntry: React.FC<IncomeEntryProps> = ({type, route}) => {
   const refreshIncome = useCallback(async () => {
     const yearMonth = formatDate(createdAt, 'YYYY-MM');
     const year = Number.parseInt(formatDate(createdAt, 'YYYY'), 10);
-    ensureYearInCache(year);
+    ensureYearInCache(year, userId);
     dispatch(invalidateIncomeCache());
     await dispatch(fetchIncomesByMonth(yearMonth));
-  }, [createdAt, dispatch]);
+  }, [createdAt, dispatch, userId]);
 
   const handleSubmit = useCallback(async () => {
     if (!isValid) {
