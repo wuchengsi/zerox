@@ -6,16 +6,18 @@ import {CustomBottomSheet} from '../components/atoms/CustomBottomSheet';
 import PrimaryText from '../components/atoms/PrimaryText';
 import {getMonthNamesShort, getCurrentYear} from '../utils/dateUtils';
 import {gs} from '../styles/globalStyles';
+import {useLanguage} from '../context/LanguageContext';
 
-const MONTHS_SHORT = getMonthNamesShort();
 const CURRENT_YEAR = getCurrentYear();
 
 const MonthYearPickerSheet: React.FC<SheetProps<'month-year-picker-sheet'>> = React.memo(props => {
   const colors = useThemeColors();
+  const {t} = useLanguage();
   const {selectedMonth, selectedYear, availableYears, onSelect} = props.payload ?? {};
 
   const [pickerYear, setPickerYear] = useState(selectedYear ?? CURRENT_YEAR);
   const [pickerMonthIndex, setPickerMonthIndex] = useState(selectedMonth ?? 0);
+  const monthsShort = getMonthNamesShort();
 
   const years = useMemo(
     () => [...(availableYears && availableYears.length > 0 ? availableYears : [CURRENT_YEAR])].sort((a, b) => b - a),
@@ -44,7 +46,7 @@ const MonthYearPickerSheet: React.FC<SheetProps<'month-year-picker-sheet'>> = Re
     <CustomBottomSheet
       sheetId={props.sheetId}
       header={{
-        title: '选择月份和年份',
+        title: t('选择月份和年份'),
         showCloseButton: true,
         onClosePress: () => void SheetManager.hide(props.sheetId),
       }}
@@ -77,7 +79,7 @@ const MonthYearPickerSheet: React.FC<SheetProps<'month-year-picker-sheet'>> = Re
         </ScrollView>
 
         <View style={[gs.row, gs.wrap, gs.gap8, gs.mb15]}>
-          {MONTHS_SHORT.map((month, index) => {
+          {monthsShort.map((month, index) => {
             const isActive = index === pickerMonthIndex;
             const disabled = isMonthDisabled(index);
 
@@ -116,7 +118,7 @@ const MonthYearPickerSheet: React.FC<SheetProps<'month-year-picker-sheet'>> = Re
             {backgroundColor: colors.accentGreen},
           ]}>
           <PrimaryText size={14} weight="semibold" color={colors.buttonText}>
-            完成
+            {t('完成')}
           </PrimaryText>
         </TouchableOpacity>
       </View>

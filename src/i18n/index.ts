@@ -65,6 +65,8 @@ const en: Record<string, string> = {
   稍后也可以在设置中修改: 'You can change this later in Settings',
   选择主题色: 'Choose accent color',
   选择显示模式: 'Choose appearance',
+  选择月份和年份: 'Choose month and year',
+  完成: 'Done',
   应用: 'Apply',
   跳过: 'Skip',
   继续: 'Continue',
