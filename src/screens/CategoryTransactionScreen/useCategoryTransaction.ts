@@ -1,11 +1,10 @@
 import useThemeColors from '../../hooks/useThemeColors';
-import {useDispatch, useSelector} from 'react-redux';
+import {useSelector} from 'react-redux';
 import {selectCurrencySymbol} from '../../redux/slice/currencyDataSlice';
 import {RouteProp, useFocusEffect} from '@react-navigation/native';
-import {ExpenseWithCategory as Expense} from '../../watermelondb/services';
-import {useCallback, useMemo} from 'react';
-import {fetchExpensesByCategory, selectEverydayExpenseData} from '../../redux/slice/everydayExpenseDataSlice';
-import {AppDispatch} from '../../redux/store';
+import {ExpenseWithCategory as Expense, getAllExpensesByCategoryAndMonth} from '../../watermelondb/services';
+import {useCallback, useMemo, useRef, useState} from 'react';
+import {selectUserId} from '../../redux/slice/userIdSlice';
 
 export type CategoryTransactionRouteProp = RouteProp<
   {
@@ -14,6 +13,7 @@ export type CategoryTransactionRouteProp = RouteProp<
       categoryName: string;
       categoryColor: string;
       categoryIcon?: string;
+      categoryLevel?: 'parent' | 'child';
       yearMonth: string;
       monthLabel: string;
     };
@@ -22,29 +22,65 @@ export type CategoryTransactionRouteProp = RouteProp<
 >;
 
 const useCategoryTransaction = (route: CategoryTransactionRouteProp) => {
-  const dispatch = useDispatch<AppDispatch>();
-  const transactions = (useSelector(selectEverydayExpenseData) ?? []) as Expense[];
   const colors = useThemeColors();
   const currencySymbol = useSelector(selectCurrencySymbol);
+  const userId = useSelector(selectUserId);
+  const requestIdRef = useRef(0);
 
   const {
     categoryId = '',
     categoryName = '',
     categoryColor = '#808080',
     categoryIcon,
+    categoryLevel = 'parent',
     yearMonth = '',
     monthLabel = '',
   } = route.params ?? {};
 
+  const queryKey = `${userId}:${categoryId}:${yearMonth}`;
+  const [categoryState, setCategoryState] = useState<{key: string; transactions: Expense[]}>({
+    key: queryKey,
+    transactions: [],
+  });
+  const transactions = categoryState.key === queryKey ? categoryState.transactions : [];
+
+  const loadCategoryTransactions = useCallback(async () => {
+    if (!userId || !categoryId || !yearMonth) {
+      setCategoryState({key: queryKey, transactions: []});
+      return;
+    }
+
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    setCategoryState(current => (current.key === queryKey ? current : {key: queryKey, transactions: []}));
+
+    try {
+      const nextTransactions = await getAllExpensesByCategoryAndMonth(userId, categoryId, yearMonth);
+      if (requestIdRef.current === requestId) {
+        setCategoryState({key: queryKey, transactions: nextTransactions});
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Error loading category transactions:', error);
+      }
+      if (requestIdRef.current === requestId) {
+        setCategoryState({key: queryKey, transactions: []});
+      }
+    }
+  }, [categoryId, queryKey, userId, yearMonth]);
+
   useFocusEffect(
     useCallback(() => {
-      dispatch(fetchExpensesByCategory({categoryId, yearMonth}));
-    }, [dispatch, categoryId, yearMonth]),
+      void loadCategoryTransactions();
+      return () => {
+        requestIdRef.current += 1;
+      };
+    }, [loadCategoryTransactions]),
   );
 
   const refreshCategoryTransactions = useCallback(async () => {
-    await dispatch(fetchExpensesByCategory({categoryId, yearMonth}));
-  }, [dispatch, categoryId, yearMonth]);
+    await loadCategoryTransactions();
+  }, [loadCategoryTransactions]);
 
   const totalAmount = useMemo(
     () => transactions.reduce((sum: number, t: Expense) => sum + t.amount, 0),
@@ -59,6 +95,7 @@ const useCategoryTransaction = (route: CategoryTransactionRouteProp) => {
     categoryName,
     categoryColor,
     categoryIcon,
+    categoryLevel,
     monthLabel,
     categoryId,
     yearMonth,

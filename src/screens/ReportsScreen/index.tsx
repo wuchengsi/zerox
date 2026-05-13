@@ -93,6 +93,7 @@ const ReportsScreen = () => {
         categoryName,
         categoryColor,
         categoryIcon,
+        categoryLevel: 'parent',
         yearMonth,
         monthLabel: `${selectedMonth} ${selectedYear}`,
       });

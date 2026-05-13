@@ -304,7 +304,23 @@ export const getExpenseCategoryDisplayName = (
   childName?: string,
 ): string => {
   if (parentName && childName) {
+    if (parentName === childName) {
+      return parentName;
+    }
     return `${parentName}·${childName}`;
   }
   return childName ?? parentName ?? '未知分类';
+};
+
+export const simplifyExpenseCategoryDisplayName = (categoryName?: string): string => {
+  if (!categoryName) {
+    return '';
+  }
+
+  const [parentName, childName, ...rest] = categoryName.split('·');
+  if (rest.length === 0 && parentName && childName && parentName === childName) {
+    return parentName;
+  }
+
+  return categoryName;
 };

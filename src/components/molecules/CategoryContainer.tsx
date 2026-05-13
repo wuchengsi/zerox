@@ -4,6 +4,7 @@ import Icon from '../atoms/Icons';
 import PrimaryText from '../atoms/PrimaryText';
 import {Colors} from '../../hooks/useThemeColors';
 import {gs} from '../../styles/globalStyles';
+import {getExpenseCategoryDisplayName} from '../../constants/defaultCategories';
 
 interface Category {
   id?: string;
@@ -62,7 +63,7 @@ const CategoryContainer: React.FC<CategoryContainerProps> = React.memo(
                   size={13}
                   weight={isSelected ? 'semibold' : 'regular'}
                   color={isSelected ? colors.buttonText : colors.primaryText}>
-                  {category.parent?.name ? `${category.parent.name}·${category.name}` : category.name}
+                  {category.parent?.name ? getExpenseCategoryDisplayName(category.parent.name, category.name) : category.name}
                 </PrimaryText>
               </View>
             </TouchableOpacity>

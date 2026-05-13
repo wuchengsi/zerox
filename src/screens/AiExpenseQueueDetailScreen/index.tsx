@@ -28,6 +28,7 @@ import {processAiAutoExpenseQueue} from '../../services/aiAutoExpenseRunner';
 import {formatDate, getISODateTime, getMonthNames, getMonthNumber} from '../../utils/dateUtils';
 import {goBack, navigate} from '../../utils/navigationUtils';
 import {gs} from '../../styles/globalStyles';
+import {simplifyExpenseCategoryDisplayName} from '../../constants/defaultCategories';
 
 type AiExpenseQueueDetailRouteProp = RouteProp<
   {
@@ -265,7 +266,7 @@ const AiExpenseQueueDetailScreen = () => {
                     </PrimaryText>
                   </View>
                   <PrimaryText size={11} color={colors.secondaryText} style={gs.mt4}>
-                    类型：{item.type === 'income' ? '收入' : '支出'} · 金额：{item.amount ?? '未识别'} · 分类：{item.categoryName || '未识别'}
+                    类型：{item.type === 'income' ? '收入' : '支出'} · 金额：{item.amount ?? '未识别'} · 分类：{simplifyExpenseCategoryDisplayName(item.categoryName) || '未识别'}
                   </PrimaryText>
                   {!isCreated && item.issues.length > 0 ? (
                     <PrimaryText size={11} color={colors.accentRed} style={[gs.mt4, {lineHeight: 16}]}>

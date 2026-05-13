@@ -3,7 +3,7 @@ import React, {useMemo} from 'react';
 import {PieChart} from 'react-native-svg-charts';
 import {useRoute} from '@react-navigation/native';
 import AppHeader from '../../components/atoms/AppHeader';
-import {goBack, navigate} from '../../utils/navigationUtils';
+import {goBack, push} from '../../utils/navigationUtils';
 import TransactionList from '../../components/molecules/TransactionList';
 import useCategoryTransaction, {CategoryTransactionRouteProp} from './useCategoryTransaction';
 import PrimaryView from '../../components/atoms/PrimaryView';
@@ -38,6 +38,7 @@ const CategoryTransactionScreen = () => {
     categoryName,
     categoryColor,
     categoryIcon,
+    categoryLevel,
     monthLabel,
     yearMonth,
     refreshCategoryTransactions,
@@ -45,32 +46,38 @@ const CategoryTransactionScreen = () => {
 
   const listHeader = useMemo(
     () => {
+      const shouldShowSubcategoryChart = categoryLevel === 'parent';
       const subcategoryTotals = new Map<string, number>();
       const subcategoryMeta = new Map<string, {color: string; icon?: string; id?: string}>();
-      transactions.forEach(transaction => {
-        const name = transaction.category?.name ?? '未知分类';
-        subcategoryTotals.set(name, (subcategoryTotals.get(name) ?? 0) + transaction.amount);
-        if (!subcategoryMeta.has(name)) {
-          subcategoryMeta.set(name, {
-            id: transaction.category?.id,
-            color: transaction.category?.color ?? categoryColor,
-            icon: transaction.category?.icon,
-          });
-        }
-      });
-      const sortedSubcategoryTotals = Array.from(subcategoryTotals.entries()).sort((a, b) => b[1] - a[1]);
-      const subcategoryPieData = sortedSubcategoryTotals.map(([name, amount], index) => {
-          const meta = subcategoryMeta.get(name);
-          const chartColor = SUBCATEGORY_CHART_COLORS[index % SUBCATEGORY_CHART_COLORS.length];
-          return {
-            key: name,
-            value: amount,
-            svg: {fill: chartColor, onPress: () => {}},
-            label: `${name}: ${currencySymbol} ${amount}`,
-            categoryId: meta?.id,
-            categoryIcon: meta?.icon,
-          };
+      if (shouldShowSubcategoryChart) {
+        transactions.forEach(transaction => {
+          const name = transaction.category?.name ?? '未知分类';
+          subcategoryTotals.set(name, (subcategoryTotals.get(name) ?? 0) + transaction.amount);
+          if (!subcategoryMeta.has(name)) {
+            subcategoryMeta.set(name, {
+              id: transaction.category?.id,
+              color: transaction.category?.color ?? categoryColor,
+              icon: transaction.category?.icon,
+            });
+          }
         });
+      }
+      const sortedSubcategoryTotals = shouldShowSubcategoryChart
+        ? Array.from(subcategoryTotals.entries()).sort((a, b) => b[1] - a[1])
+        : [];
+      const subcategoryPieData = sortedSubcategoryTotals.map(([name, amount], index) => {
+        const meta = subcategoryMeta.get(name);
+        const chartColor = SUBCATEGORY_CHART_COLORS[index % SUBCATEGORY_CHART_COLORS.length];
+        return {
+          key: name,
+          value: amount,
+          svg: {fill: chartColor, onPress: () => {}},
+          label: `${name}: ${currencySymbol} ${amount}`,
+          categoryId: meta?.id,
+          categoryIcon: meta?.icon,
+        };
+      });
+      const hasMultipleSubcategories = subcategoryPieData.length > 1;
 
       return (
         <View style={[gs.rounded12, gs.py12, gs.px14, gs.mb10, {backgroundColor: colors.secondaryAccent}]}>
@@ -90,7 +97,7 @@ const CategoryTransactionScreen = () => {
             </PrimaryText>
           </View>
         </View>
-          {subcategoryPieData.length > 0 ? (
+          {hasMultipleSubcategories ? (
             <View style={gs.mt10}>
               <PrimaryText size={13} weight="semibold" style={gs.mb8}>
                 {t('小类占比')}
@@ -101,11 +108,12 @@ const CategoryTransactionScreen = () => {
                 colors={colors}
                 currencySymbol={currencySymbol}
                 onCategoryPress={(categoryId, subcategoryName, subcategoryColor, subcategoryIcon) => {
-                  navigate('CategoryTransactionScreen', {
+                  push('CategoryTransactionScreen', {
                     categoryId,
                     categoryName: subcategoryName,
                     categoryColor: subcategoryColor,
                     categoryIcon: subcategoryIcon,
+                    categoryLevel: 'child',
                     yearMonth,
                     monthLabel,
                   });
@@ -116,7 +124,7 @@ const CategoryTransactionScreen = () => {
         </View>
       );
     },
-    [colors, currencySymbol, totalAmount, categoryColor, categoryIcon, monthLabel, transactions, yearMonth],
+    [categoryLevel, colors, currencySymbol, totalAmount, categoryColor, categoryIcon, monthLabel, transactions, yearMonth, t],
   );
 
   const listEmpty = useMemo(
@@ -130,7 +138,7 @@ const CategoryTransactionScreen = () => {
         </PrimaryText>
       </View>
     ),
-    [colors, categoryName],
+    [colors, categoryName, t],
   );
 
   return (

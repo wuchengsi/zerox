@@ -25,6 +25,7 @@ import {FlashList} from '@shopify/flash-list';
 import {AppDispatch} from '../../redux/store';
 import {gs} from '../../styles/globalStyles';
 import {useLanguage} from '../../context/LanguageContext';
+import {getExpenseCategoryDisplayName} from '../../constants/defaultCategories';
 
 interface CategoryInfo {
   id?: string;
@@ -197,7 +198,7 @@ const ExpenseRow: React.FC<ExpenseRowProps> = React.memo(
                 <PrimaryText weight="medium" numberOfLines={1}>{expense.title}</PrimaryText>
                 <PrimaryText size={11} color={colors.secondaryText} numberOfLines={1}>
                   {expense.category?.parentName
-                    ? `${expense.category.parentName}·${expense.category.name}`
+                    ? getExpenseCategoryDisplayName(expense.category.parentName, expense.category.name)
                     : expense.category?.name}
                   {' · '}
                   {formatDate(expense.date, 'Do MMM')}

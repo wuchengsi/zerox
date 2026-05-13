@@ -14,6 +14,7 @@ import EmptyState from '../../components/atoms/EmptyState';
 import type {Colors} from '../../hooks/useThemeColors';
 import {gs, hitSlop} from '../../styles/globalStyles';
 import {useLanguage} from '../../context/LanguageContext';
+import {getExpenseCategoryDisplayName} from '../../constants/defaultCategories';
 
 const Segment = ({
   active,
@@ -76,7 +77,7 @@ const CategoryRow = ({
       </View>
       <View style={[gs.flex1, gs.ml12]}>
         <PrimaryText weight="medium" size={14} numberOfLines={1}>
-          {prefix ? `${prefix}·${category.name}` : category.name}
+          {prefix ? getExpenseCategoryDisplayName(prefix, category.name) : category.name}
         </PrimaryText>
       </View>
     </View>

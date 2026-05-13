@@ -26,6 +26,16 @@ export const replace = (name: string, params?: object) => {
   }
 };
 
+export const push = (name: string, params?: object) => {
+  if (navigationRef) {
+    navigationRef.dispatch(StackActions.push(name, params));
+  } else if (__DEV__) {
+    console.error(
+      'Navigation reference is not set. Make sure to call setNavigationRef.',
+    );
+  }
+};
+
 export const goBack = (action?: () => any) => {
   if (navigationRef) {
     navigationRef.dispatch(CommonActions.goBack());
