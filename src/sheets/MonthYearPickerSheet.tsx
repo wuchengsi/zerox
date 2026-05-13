@@ -1,5 +1,5 @@
 import {ScrollView, TouchableOpacity, View} from 'react-native';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import {SheetManager, SheetProps} from 'react-native-actions-sheet';
 import useThemeColors from '../hooks/useThemeColors';
 import {CustomBottomSheet} from '../components/atoms/CustomBottomSheet';
@@ -17,7 +17,10 @@ const MonthYearPickerSheet: React.FC<SheetProps<'month-year-picker-sheet'>> = Re
   const [pickerYear, setPickerYear] = useState(selectedYear ?? CURRENT_YEAR);
   const [pickerMonthIndex, setPickerMonthIndex] = useState(selectedMonth ?? 0);
 
-  const years = availableYears && availableYears.length > 0 ? availableYears : [CURRENT_YEAR];
+  const years = useMemo(
+    () => [...(availableYears && availableYears.length > 0 ? availableYears : [CURRENT_YEAR])].sort((a, b) => b - a),
+    [availableYears],
+  );
 
   const handleConfirm = useCallback(() => {
     onSelect?.(pickerMonthIndex, pickerYear);

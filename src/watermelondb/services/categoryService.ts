@@ -97,9 +97,23 @@ export const softDeleteCategoryById = async (
 ): Promise<void> => {
   await database.write(async () => {
     const category = await database.get<Category>('categories').find(categoryId);
-    await category.update(cat => {
-      cat.categoryStatus = false;
-    });
+    const children = !category.parentId
+      ? await database
+          .get<Category>('categories')
+          .query(Q.where('parent_id', categoryId))
+          .fetch()
+      : [];
+
+    await database.batch(
+      category.prepareUpdate(cat => {
+        cat.categoryStatus = false;
+      }),
+      ...children.map(child =>
+        child.prepareUpdate(cat => {
+          cat.categoryStatus = false;
+        }),
+      ),
+    );
   });
 };
 

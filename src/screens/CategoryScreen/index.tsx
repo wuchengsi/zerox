@@ -1,5 +1,6 @@
 import {RefreshControl, ScrollView, TouchableOpacity, View} from 'react-native';
 import React, {useCallback, useState} from 'react';
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import {navigate} from '../../utils/navigationUtils';
 import Icon from '../../components/atoms/Icons';
 import HeaderContainer from '../../components/molecules/HeaderContainer';
@@ -89,6 +90,23 @@ const CategoryRow = ({
   </View>
 );
 
+const ExpenseGroupDeleteAction = ({
+  colors,
+  onPress,
+}: {
+  colors: Colors;
+  onPress: () => void;
+}) => (
+  <TouchableOpacity
+    onPress={onPress}
+    activeOpacity={0.7}
+    style={[gs.center, gs.pl10, gs.pr5]}>
+    <View style={[gs.size40, gs.roundedFull, gs.center, {backgroundColor: colors.lightAccent}]}>
+      <Icon name="trash-2" size={18} color={colors.accentOrange} />
+    </View>
+  </TouchableOpacity>
+);
+
 const CategoryScreen = () => {
   const {
     colors,
@@ -120,51 +138,74 @@ const CategoryScreen = () => {
   const renderExpenseGroup = useCallback(
     (group: ExpenseCategoryGroup) => {
       const isExpanded = expandedExpenseGroupId === group.id;
+      const toggleGroup = () => setExpandedExpenseGroupId(current => (current === group.id ? null : group.id));
+      const deleteGroup = () => {
+        if (isExpanded) {
+          setExpandedExpenseGroupId(null);
+        }
+        handleDelete(group.id);
+      };
 
       return (
         <View key={group.id} style={gs.mb8}>
-          <View
-            style={[
-              gs.rowBetweenCenter,
-              gs.px14,
-              gs.py12,
-              gs.rounded12,
-              {backgroundColor: colors.secondaryAccent},
-            ]}>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => setExpandedExpenseGroupId(current => (current === group.id ? null : group.id))}
-              style={[gs.rowCenter, gs.flex1]}>
-              <View
-                style={[
-                  gs.size32,
-                  gs.rounded10,
-                  gs.center,
-                  {backgroundColor: (group.color || colors.primaryText) + '18'},
-                ]}>
-                <Icon name={group.icon || 'shapes'} size={16} color={group.color || colors.primaryText} />
-              </View>
-              <View style={[gs.flex1, gs.ml10]}>
-                <PrimaryText weight="semibold" size={15} numberOfLines={1}>
-                  {group.name}
-                </PrimaryText>
-                <PrimaryText size={11} variant="number" color={colors.secondaryText}>
-                  {group.children.length} 个小类
-                </PrimaryText>
-              </View>
-              <Icon name={isExpanded ? 'chevron-up' : 'chevron-down'} size={18} color={colors.secondaryText} />
-            </TouchableOpacity>
-            <View style={[gs.rowCenter, gs.gap8]}>
+          <ReanimatedSwipeable
+            renderRightActions={(_progress, _translation, swipeableMethods) => (
+              <ExpenseGroupDeleteAction
+                colors={colors}
+                onPress={() => {
+                  swipeableMethods.close();
+                  deleteGroup();
+                }}
+              />
+            )}
+            friction={2}
+            overshootRight={false}
+            overshootFriction={8}>
+            <View
+              style={[
+                gs.rowBetweenCenter,
+                gs.px14,
+                gs.py12,
+                gs.rounded12,
+                {backgroundColor: colors.secondaryAccent},
+              ]}>
               <TouchableOpacity
-                onPress={() => navigate('AddCategoryScreen', {categoryKind: 'expense', parentId: group.id, parentName: group.name})}
-                hitSlop={hitSlop}>
-                <Icon name="plus-circle" size={19} color={colors.primaryText} />
+                activeOpacity={0.7}
+                onPress={toggleGroup}
+                style={[gs.rowCenter, gs.flex1]}>
+                <View
+                  style={[
+                    gs.size32,
+                    gs.rounded10,
+                    gs.center,
+                    {backgroundColor: (group.color || colors.primaryText) + '18'},
+                  ]}>
+                  <Icon name={group.icon || 'shapes'} size={16} color={group.color || colors.primaryText} />
+                </View>
+                <View style={[gs.flex1, gs.ml10]}>
+                  <PrimaryText weight="semibold" size={15} numberOfLines={1}>
+                    {group.name}
+                  </PrimaryText>
+                  <PrimaryText size={11} variant="number" color={colors.secondaryText}>
+                    {group.children.length} 个小类
+                  </PrimaryText>
+                </View>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => editCategory(group)} hitSlop={hitSlop}>
-                <Icon name="pencil" size={17} color={colors.secondaryText} />
-              </TouchableOpacity>
+              <View style={[gs.rowCenter, gs.gap8, gs.ml8]}>
+                <TouchableOpacity
+                  onPress={() => navigate('AddCategoryScreen', {categoryKind: 'expense', parentId: group.id, parentName: group.name})}
+                  hitSlop={hitSlop}>
+                  <Icon name="plus-circle" size={19} color={colors.primaryText} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => editCategory(group)} hitSlop={hitSlop}>
+                  <Icon name="pencil" size={17} color={colors.secondaryText} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={toggleGroup} hitSlop={hitSlop}>
+                  <Icon name={isExpanded ? 'chevron-up' : 'chevron-down'} size={18} color={colors.secondaryText} />
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
+          </ReanimatedSwipeable>
           {isExpanded ? (
             <View style={gs.mt8}>
               {group.children.map(child => (
@@ -178,7 +219,7 @@ const CategoryScreen = () => {
               ))}
             </View>
           ) : null}
-          </View>
+        </View>
       );
     },
     [colors, editCategory, expandedExpenseGroupId, handleDelete],
