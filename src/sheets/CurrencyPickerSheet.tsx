@@ -1,7 +1,7 @@
 import {TextInput, TouchableOpacity, View} from 'react-native';
 import React, {useCallback, useMemo, useState} from 'react';
 import {SheetManager, SheetProps} from 'react-native-actions-sheet';
-import {FlashList} from '@shopify/flash-list';
+import {FlatList} from 'react-native-gesture-handler';
 import useThemeColors from '../hooks/useThemeColors';
 import {CustomBottomSheet} from '../components/atoms/CustomBottomSheet';
 import PrimaryButton from '../components/atoms/PrimaryButton';
@@ -89,7 +89,7 @@ const CurrencyPickerSheet: React.FC<SheetProps<'currency-picker-sheet'>> = React
         onClosePress: () => void SheetManager.hide(props.sheetId),
       }}
       onClose={handleClose}
-      gestureEnabled={false}>
+      gestureEnabled>
       <View style={[gs.px15, gs.pb10]}>
         <View
           style={[
@@ -115,11 +115,13 @@ const CurrencyPickerSheet: React.FC<SheetProps<'currency-picker-sheet'>> = React
         </View>
 
         <View style={[gs.h320, gs.my10]}>
-          <FlashList
+          <FlatList
             data={filteredCurrencies}
             renderItem={renderCurrencyItem}
             numColumns={3}
             keyExtractor={(currency: Currency) => currency.code}
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
           />
         </View>
 

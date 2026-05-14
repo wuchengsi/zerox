@@ -569,6 +569,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
       keyExtractor={item => item.id}
       extraData={listExtraData}
       getItemType={item => item.itemType}
+      maintainVisibleContentPosition={{disabled: true}}
       ListHeaderComponent={ListHeaderComponent}
       ListEmptyComponent={ListEmptyComponent}
       refreshControl={refreshControl}
