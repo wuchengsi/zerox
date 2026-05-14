@@ -7,7 +7,7 @@ import {
   selectCurrencySymbol,
   setCurrencyData,
 } from '../../redux/slice/currencyDataSlice';
-import {useCallback, useEffect} from 'react';
+import {useCallback, useEffect, useState} from 'react';
 import {getAppVersion} from '../../utils/getVersion';
 import {AccentColorId, ThemeMode, useLanguage, useTheme} from '../../context';
 import {useDialog} from '../../context/DialogContext';
@@ -18,6 +18,11 @@ import {setIsOnboarded} from '../../redux/slice/isOnboardedSlice';
 import {fetchAllData, selectAllData} from '../../redux/slice/allDataSlice';
 import {AppDispatch} from '../../redux/store';
 import {resetAppState} from '../../redux/rootReducer';
+import {
+  getHomeAiShortcutVisible,
+  setHomeAiShortcutVisible,
+  subscribeHomeAiShortcutVisible,
+} from '../../services/homeAiShortcutPreferenceService';
 
 const useSettings = () => {
   const userName = useSelector(selectUserName);
@@ -26,6 +31,7 @@ const useSettings = () => {
   const currencyName = useSelector(selectCurrencyName);
   const currencySymbol = useSelector(selectCurrencySymbol);
   const allData = useSelector(selectAllData);
+  const [homeAiShortcutVisible, setHomeAiShortcutVisibleState] = useState(getHomeAiShortcutVisible);
 
   const {colors, themeMode, setThemeMode, accentColorId, setAccentColor} = useTheme();
   const {language, setLanguage, t} = useLanguage();
@@ -37,6 +43,14 @@ const useSettings = () => {
   useEffect(() => {
     dispatch(fetchAllData());
   }, [dispatch]);
+
+  useEffect(
+    () =>
+      subscribeHomeAiShortcutVisible(visible => {
+        setHomeAiShortcutVisibleState(visible);
+      }),
+    [],
+  );
 
   const handleThemeSelection = useCallback(async (theme: string) => {
     try {
@@ -55,6 +69,11 @@ const useSettings = () => {
   const handleAccentColorSelection = useCallback(async (color: AccentColorId) => {
     await setAccentColor(color);
   }, [setAccentColor]);
+
+  const handleHomeAiShortcutVisibleChange = useCallback((visible: boolean) => {
+    setHomeAiShortcutVisible(visible);
+    setHomeAiShortcutVisibleState(visible);
+  }, []);
 
   const handleNameUpdate = useCallback(async (newName: string) => {
     try {
@@ -166,6 +185,7 @@ const useSettings = () => {
     selectedTheme: themeMode,
     selectedLanguage: language,
     selectedAccentColor: accentColorId,
+    homeAiShortcutVisible,
     userName,
     currencySymbol,
     currencyName,
@@ -175,6 +195,7 @@ const useSettings = () => {
     allData,
     handleExportResult,
     requestStorageViaDialog,
+    handleHomeAiShortcutVisibleChange,
     t,
   };
 };

@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {TouchableOpacity, View} from 'react-native';
 import Icon from '../../components/atoms/Icons';
 import {navigate} from '../../utils/navigationUtils';
@@ -14,6 +14,10 @@ import {useDialog} from '../../context/DialogContext';
 import {getAiSettings, getMissingAiSettingsFields} from '../../services/aiSettingsService';
 import {gs, hitSlop} from '../../styles/globalStyles';
 import {useLanguage} from '../../context/LanguageContext';
+import {
+  getHomeAiShortcutVisible,
+  subscribeHomeAiShortcutVisible,
+} from '../../services/homeAiShortcutPreferenceService';
 
 const HomeScreen = () => {
   const {
@@ -35,6 +39,15 @@ const HomeScreen = () => {
   } = useHome();
   const {showAlert} = useDialog();
   const {t} = useLanguage();
+  const [homeAiShortcutVisible, setHomeAiShortcutVisibleState] = useState(getHomeAiShortcutVisible);
+
+  useEffect(
+    () =>
+      subscribeHomeAiShortcutVisible(visible => {
+        setHomeAiShortcutVisibleState(visible);
+      }),
+    [],
+  );
 
   const openMonthPicker = useCallback(() => {
     void SheetManager.show('month-year-picker-sheet', {
@@ -82,7 +95,7 @@ const HomeScreen = () => {
         </View>
       </TouchableOpacity>
     ),
-    [selectedMonthName, selectedYear, currencySymbol, totalSpent, transactionCount, avgPerDay, colors, openMonthPicker],
+    [selectedMonthName, selectedYear, currencySymbol, totalSpent, transactionCount, avgPerDay, colors, openMonthPicker, t],
   );
 
   const listEmpty = useMemo(
@@ -107,7 +120,12 @@ const HomeScreen = () => {
     }
 
     navigate('AiQuickExpenseScreen');
-  }, [showAlert]);
+  }, [showAlert, t]);
+
+  const transactionListContentStyle = useMemo(
+    () => ({paddingBottom: homeAiShortcutVisible ? 150 : 90}),
+    [homeAiShortcutVisible],
+  );
 
   return (
     <>
@@ -124,19 +142,21 @@ const HomeScreen = () => {
           ListEmptyComponent={listEmpty}
           refreshing={refreshing}
           onRefresh={onRefresh}
-          contentContainerStyle={gs.pb80}
+          contentContainerStyle={transactionListContentStyle}
         />
       </PrimaryView>
-      <View style={[gs.absolute, {bottom: 78}, gs.right15, gs.zIndex1]}>
-        <TouchableOpacity
-          style={[gs.size50, gs.rounded8, gs.center, {backgroundColor: colors.secondaryBackground}]}
-          onPress={handleOpenAiQuickExpense}
-          hitSlop={hitSlop}
-          accessibilityLabel={t('AI 快速记账')}
-          accessibilityRole="button">
-          <Icon name="sparkles" size={26} color={colors.primaryText} />
-        </TouchableOpacity>
-      </View>
+      {homeAiShortcutVisible ? (
+        <View style={[gs.absolute, {bottom: 78}, gs.right15, gs.zIndex1]}>
+          <TouchableOpacity
+            style={[gs.size50, gs.rounded8, gs.center, {backgroundColor: colors.secondaryBackground}]}
+            onPress={handleOpenAiQuickExpense}
+            hitSlop={hitSlop}
+            accessibilityLabel={t('AI 快速记账')}
+            accessibilityRole="button">
+            <Icon name="sparkles" size={26} color={colors.primaryText} />
+          </TouchableOpacity>
+        </View>
+      ) : null}
       <View style={[gs.absolute, gs.bottom15, gs.right15, gs.zIndex1]}>
         <TouchableOpacity
           style={[gs.size50, gs.rounded8, gs.center, {backgroundColor: colors.secondaryBackground}]}

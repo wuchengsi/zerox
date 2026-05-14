@@ -1,4 +1,4 @@
-import {ScrollView, Text, TouchableOpacity, View, Platform, Share} from 'react-native';
+import {ScrollView, Switch, Text, TouchableOpacity, View, Platform, Share} from 'react-native';
 import React, {useCallback} from 'react';
 import Icon from '../../components/atoms/Icons';
 import {goBack, navigate} from '../../utils/navigationUtils';
@@ -47,6 +47,18 @@ const SettingsRow: React.FC<SettingsRowProps> = ({icon, label, subtitle, value, 
   </TouchableOpacity>
 );
 
+const withAlpha = (hexColor: string, alpha: number): string => {
+  const hex = hexColor.replace('#', '');
+  if (hex.length !== 6) {
+    return hexColor;
+  }
+
+  const r = Number.parseInt(hex.slice(0, 2), 16);
+  const g = Number.parseInt(hex.slice(2, 4), 16);
+  const b = Number.parseInt(hex.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 const SettingsScreen = () => {
   const {
     appVersion,
@@ -59,6 +71,7 @@ const SettingsScreen = () => {
     selectedTheme,
     selectedLanguage,
     selectedAccentColor,
+    homeAiShortcutVisible,
     userName,
     currencySymbol,
     currencyName,
@@ -68,6 +81,7 @@ const SettingsScreen = () => {
     allData,
     handleExportResult,
     requestStorageViaDialog,
+    handleHomeAiShortcutVisibleChange,
     t,
   } = useSettings();
 
@@ -260,6 +274,22 @@ const SettingsScreen = () => {
             label={t('LLM API 配置')}
             subtitle={t('OpenAI 兼容接口，本地保存 API Key')}
             onPress={() => navigate('AiSettingsScreen')}
+          />
+          <View style={[gs.mx16, {height: 1, backgroundColor: colors.secondaryAccent}]} />
+          <SettingsRow
+            colors={colors}
+            icon="sparkles"
+            label={t('首页 AI 入口')}
+            subtitle={t('在首页显示 AI 快速记账按钮')}
+            valueNode={
+              <Switch
+                value={homeAiShortcutVisible}
+                onValueChange={handleHomeAiShortcutVisibleChange}
+                trackColor={{false: withAlpha(colors.accentGreen, 0.28), true: colors.accentGreen}}
+                thumbColor={colors.containerColor}
+                ios_backgroundColor={withAlpha(colors.accentGreen, 0.28)}
+              />
+            }
           />
         </View>
 
